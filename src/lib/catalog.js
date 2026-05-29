@@ -77,13 +77,19 @@ export async function fetchCategories() {
 export async function fetchProducts(filters = {}) {
   if (!supabase) return filterFallbackProducts(filters)
 
+  const categoryId = await resolveCategoryId(filters.category)
+
   let query = supabase
     .from('products')
     .select('*, category:categories(*), feedback(rating), seller:profiles(full_name)')
     .eq('is_active', true)
 
-  if (filters.search) query = query.ilike('name', `%${filters.search}%`)
-  if (filters.category) query = query.eq('category_id', filters.category)
+  if (filters.search?.trim()) {
+    const term = sanitizeSearchTerm(filters.search)
+    if (term) query = query.or(`name.ilike.%${term}%,description.ilike.%${term}%`)
+  }
+  if (filters.category && !categoryId) return []
+  if (categoryId) query = query.eq('category_id', categoryId)
   if (filters.minPrice) query = query.gte('price', Number(filters.minPrice))
   if (filters.maxPrice) query = query.lte('price', Number(filters.maxPrice))
 
@@ -104,6 +110,28 @@ export async function fetchProducts(filters = {}) {
     image_url: product.image_url || product.image,
     show_price: product.show_price ?? true,
   }))
+}
+
+async function resolveCategoryId(category) {
+  if (!category) return ''
+  if (isUuid(category)) return category
+
+  const { data, error } = await supabase
+    .from('categories')
+    .select('id')
+    .eq('slug', category)
+    .maybeSingle()
+
+  if (error) throw error
+  return data?.id || ''
+}
+
+function isUuid(value) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
+}
+
+function sanitizeSearchTerm(value) {
+  return value.trim().replace(/[,%()]/g, ' ')
 }
 
 export async function fetchProduct(id) {
@@ -131,11 +159,23 @@ function averageRating(feedback = []) {
 }
 
 function filterFallbackProducts(filters) {
-  return fallbackProducts.filter((product) => {
-    const matchesSearch = !filters.search || product.name.toLowerCase().includes(filters.search.toLowerCase())
+  const filtered = fallbackProducts.filter((product) => {
+    const searchText = `${product.name} ${product.description} ${product.category?.name || ''}`.toLowerCase()
+    const matchesSearch = !filters.search || searchText.includes(filters.search.toLowerCase().trim())
     const matchesCategory = !filters.category || product.category.id === filters.category || product.category.slug === filters.category
     const matchesMin = !filters.minPrice || product.price >= Number(filters.minPrice)
     const matchesMax = !filters.maxPrice || product.price <= Number(filters.maxPrice)
     return matchesSearch && matchesCategory && matchesMin && matchesMax
+  })
+
+  return sortFallbackProducts(filtered, filters.sort)
+}
+
+function sortFallbackProducts(products, sort = 'newest') {
+  return [...products].sort((a, b) => {
+    if (sort === 'price_low') return Number(a.price) - Number(b.price)
+    if (sort === 'price_high') return Number(b.price) - Number(a.price)
+    if (sort === 'name') return a.name.localeCompare(b.name)
+    return 0
   })
 }

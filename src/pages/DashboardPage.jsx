@@ -120,7 +120,7 @@ export default function DashboardPage() {
                   </div>
                   <Field label="Description" name="description" value={form.description} onChange={updateField} textarea required />
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <Field label="Price" name="price" value={form.price} onChange={updateField} type="number" required />
+                    <Field label="Price (AUED)" name="price" value={form.price} onChange={updateField} type="number" required />
                     <Field label="MOQ" name="min_order_quantity" value={form.min_order_quantity} onChange={updateField} type="number" required />
                   </div>
                   <div>
@@ -172,7 +172,7 @@ export default function DashboardPage() {
                     <td className="py-5">
                       <span className="px-3 py-1 text-[10px] font-bold bg-gray-100 text-gray-500 rounded-full uppercase tracking-widest">{product.category?.name || 'Kitchen'}</span>
                     </td>
-                    <td className="py-5"><span className="text-sm font-bold text-brand-600">${product.price}</span></td>
+                    <td className="py-5"><span className="text-sm font-bold text-brand-600">AUED {product.price}</span></td>
                     <td className="py-5 text-sm font-medium text-gray-400">{product.created_at ? new Date(product.created_at).toLocaleDateString() : 'Today'}</td>
                     <td className="pr-8 py-5 text-right">
                       <div className="flex items-center justify-end gap-2">

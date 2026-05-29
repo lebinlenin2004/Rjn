@@ -59,8 +59,8 @@ function GeneralContactPage() {
         </div>
 
         <div className="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-8 text-center">
-          <Info icon="fa-envelope" title="Email Us" text="support@rjn.com" />
-          <Info icon="fa-phone" title="Call Us" text="+1 (555) 000-0000" />
+          <Info icon="fa-envelope" title="Email Us" text="rjnfoods@gmail.com" />
+          <Info icon="fa-phone" title="Call Us" text="0509690664" />
           <Info icon="fa-location-dot" title="Visit Us" text="123 Market St, City" />
         </div>
       </div>

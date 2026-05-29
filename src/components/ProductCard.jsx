@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom'
 
 export default function ProductCard({ compact = false, product }) {
-  const whatsappText = encodeURIComponent(`*NEW ORDER INQUIRY - RJN STORE*\n\n*Product:* ${product.name}\n*Category:* ${product.category?.name || 'Kitchen'}${product.show_price !== false ? `\n*Price:* $${product.price}` : ''}\n\nHello! I would like to order this item. Is it available?\n\n_Sent from RJN Store Website_`)
+  const price = `AUED ${product.price}`
+  const whatsappText = encodeURIComponent(`*NEW ORDER INQUIRY - RJN STORE*\n\n*Product:* ${product.name}\n*Category:* ${product.category?.name || 'Kitchen'}${product.show_price !== false ? `\n*Price:* ${price}` : ''}\n\nHello! I would like to order this item. Is it available?\n\n_Sent from RJN Store Website_`)
   const image = product.image_url || product.image || '/placeholder-product.svg'
 
   return (
@@ -46,11 +47,11 @@ export default function ProductCard({ compact = false, product }) {
         {product.show_price !== false ? (
           <div className={compact ? 'mb-4' : 'flex items-center justify-between mb-4'}>
             {compact ? (
-              <span className="font-bold text-brand-600 text-base">${product.price}</span>
+              <span className="font-bold text-brand-600 text-base">{price}</span>
             ) : (
               <div className="flex flex-col">
                 <span className="text-[10px] font-bold text-gray-400 uppercase leading-none mb-1">Price</span>
-                <span className="font-black text-gray-900 text-lg">${product.price}</span>
+                <span className="font-black text-gray-900 text-lg">{price}</span>
               </div>
             )}
           </div>

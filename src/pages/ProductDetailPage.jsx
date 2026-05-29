@@ -36,7 +36,8 @@ export default function ProductDetailPage() {
   if (!product) return <section className="py-12 bg-white"><div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-gray-500">Loading product...</div></section>
 
   const image = product.image_url || product.image || '/placeholder-product.svg'
-  const whatsappText = encodeURIComponent(`*NEW ORDER INQUIRY - RJN STORE*\n\n*Product:* ${product.name}\n*Category:* ${product.category?.name || 'Kitchen'}${product.show_price !== false ? `\n*Price:* $${product.price}` : ''}\n\nHello! I am interested in this item. Is it available for delivery?\n\n_Sent from RJN Store Website_`)
+  const price = `AUED ${product.price}`
+  const whatsappText = encodeURIComponent(`*NEW ORDER INQUIRY - RJN STORE*\n\n*Product:* ${product.name}\n*Category:* ${product.category?.name || 'Kitchen'}${product.show_price !== false ? `\n*Price:* ${price}` : ''}\n\nHello! I am interested in this item. Is it available for delivery?\n\n_Sent from RJN Store Website_`)
 
   return (
     <section className="py-12 bg-white">
@@ -68,7 +69,7 @@ export default function ProductDetailPage() {
               <div className="flex flex-wrap items-center gap-6 mb-6">
                 {product.show_price !== false ? (
                   <>
-                    <div className="text-3xl font-bold text-brand-600">${product.price}</div>
+                    <div className="text-3xl font-bold text-brand-600">{price}</div>
                     <div className="h-6 w-px bg-gray-200"></div>
                   </>
                 ) : null}
@@ -181,7 +182,7 @@ export default function ProductDetailPage() {
                   </div>
                   <div className="min-w-0">
                     <h4 className="font-bold text-gray-900 text-sm truncate mb-1 group-hover:text-brand-500 transition-colors">{item.name}</h4>
-                    <p className="text-brand-600 font-bold text-base">${item.price}</p>
+                    <p className="text-brand-600 font-bold text-base">AUED {item.price}</p>
                   </div>
                 </Link>
               ))}
