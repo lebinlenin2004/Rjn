@@ -1,0 +1,65 @@
+import { Link } from 'react-router-dom'
+
+export default function ProductCard({ compact = false, product }) {
+  const whatsappText = encodeURIComponent(`*NEW ORDER INQUIRY - RJN STORE*\n\n*Product:* ${product.name}\n*Category:* ${product.category?.name || 'Kitchen'}${product.show_price !== false ? `\n*Price:* $${product.price}` : ''}\n\nHello! I would like to order this item. Is it available?\n\n_Sent from RJN Store Website_`)
+  const image = product.image_url || product.image || '/placeholder-product.svg'
+
+  return (
+    <div className={`group relative flex flex-col bg-white ${compact ? 'rounded-2xl p-2 hover:shadow-xl hover:-translate-y-1 duration-300' : 'rounded-3xl p-3 hover:shadow-2xl hover:-translate-y-2 duration-500'} border border-gray-100 shadow-sm transition-all`}>
+      <div className={`${compact ? 'rounded-xl mb-4' : 'rounded-2xl mb-5'} aspect-square overflow-hidden bg-gray-50 relative`}>
+        {image ? (
+          <img src={image} alt={product.name} className={`${compact ? 'duration-500' : 'duration-700'} w-full h-full object-cover transition-transform group-hover:scale-110`} />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-gray-200">
+            <i className="fa-solid fa-image text-3xl"></i>
+          </div>
+        )}
+
+        <div className={`absolute ${compact ? 'top-2 right-2' : 'top-3 right-3 translate-y-2 group-hover:translate-y-0'} opacity-0 group-hover:opacity-100 transition-all z-20`}>
+          <button className={`${compact ? 'w-8 h-8 rounded-full' : 'w-10 h-10 rounded-xl'} bg-white/90 backdrop-blur flex items-center justify-center text-gray-400 hover:text-red-500 shadow-sm transition-colors`}>
+            <i className="fa-regular fa-heart"></i>
+          </button>
+        </div>
+
+        <Link to={`/products/${product.id}`} className="absolute inset-0 z-10" aria-label={product.name}></Link>
+      </div>
+
+      <div className={`${compact ? 'px-2 pb-2' : 'px-1 pb-1'} flex-1 flex flex-col`}>
+        <div className="flex-1">
+          <div className={`flex ${compact ? 'justify-between items-start mb-1' : 'items-center justify-between mb-2'}`}>
+            <span className={`${compact ? 'text-[10px] font-bold text-brand-600 uppercase tracking-widest' : 'text-[10px] font-black text-brand-600 uppercase tracking-widest bg-brand-50 px-2 py-0.5 rounded-md'}`}>
+              {product.category?.name || 'Kitchen'}
+            </span>
+            <div className="flex items-center gap-1">
+              <i className="fa-solid fa-star text-[10px] text-yellow-400"></i>
+              <span className="text-[10px] font-black text-gray-400">{Number(product.rating || 0).toFixed(1)}</span>
+            </div>
+          </div>
+          <h3 className={`${compact ? 'font-semibold' : 'font-bold'} text-gray-900 text-sm line-clamp-1 group-hover:text-brand-600 transition-colors mb-1`}>
+            {product.name}
+          </h3>
+          <p className="text-xs text-gray-500 line-clamp-1 mb-3">
+            {compact ? <>By <span className="font-medium text-gray-700">{product.seller?.username || product.seller?.full_name || product.seller_name || 'RJN Official'}</span></> : product.description}
+          </p>
+        </div>
+
+        {product.show_price !== false ? (
+          <div className={compact ? 'mb-4' : 'flex items-center justify-between mb-4'}>
+            {compact ? (
+              <span className="font-bold text-brand-600 text-base">${product.price}</span>
+            ) : (
+              <div className="flex flex-col">
+                <span className="text-[10px] font-bold text-gray-400 uppercase leading-none mb-1">Price</span>
+                <span className="font-black text-gray-900 text-lg">${product.price}</span>
+              </div>
+            )}
+          </div>
+        ) : null}
+
+        <a href={`https://wa.me/919895259919?text=${whatsappText}`} target="_blank" rel="noreferrer" className={`relative z-20 flex items-center justify-center gap-2 ${compact ? 'py-2.5 bg-brand-50 hover:bg-brand-500 hover:text-white text-brand-600' : 'py-3 bg-gray-900 text-white hover:bg-brand-500'} text-xs font-bold rounded-xl transition-all duration-300 shadow-sm hover:shadow-brand-500/25 active:scale-95`}>
+          <i className="fa-brands fa-whatsapp text-sm"></i> WhatsApp
+        </a>
+      </div>
+    </div>
+  )
+}

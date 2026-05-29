@@ -1,0 +1,146 @@
+/* ===== RJN Custom Styles (Tailwind Companion) ===== */
+
+@keyframes dropdownIn {
+  from { opacity: 0; transform: translateY(-8px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.animate-dropdown {
+  animation: dropdownIn 0.15s ease-out;
+}
+
+.hero-gradient {
+  background: linear-gradient(135deg, #f0f4ff 0%, #eefdf3 50%, #ffffff 100%);
+}
+
+.category-scroll::-webkit-scrollbar,
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.category-scroll,
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.product-img-box {
+  align-items: center;
+  display: flex;
+  height: 200px;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.product-img-box img {
+  max-height: 100%;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+.line-clamp-1,
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-1 {
+  -webkit-line-clamp: 1;
+}
+
+.line-clamp-2 {
+  -webkit-line-clamp: 2;
+}
+
+.category-card-overlay {
+  background: linear-gradient(to bottom, transparent 40%, rgba(0, 0, 0, 0.7));
+}
+
+.form-input-styled input,
+.form-input-styled select,
+.form-input-styled textarea,
+.rjn-input {
+  background-color: #f9fafb;
+  border: 1px solid #f3f4f6;
+  border-radius: 1rem;
+  color: #1a1a1a;
+  display: block;
+  font-family: Inter, sans-serif;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.5;
+  outline: none;
+  padding: 1rem 1.25rem;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+  width: 100%;
+}
+
+textarea.rjn-input {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.form-input-styled input:focus,
+.form-input-styled select:focus,
+.form-input-styled textarea:focus,
+.rjn-input:focus {
+  background-color: #ffffff;
+  border-color: #00a859;
+  box-shadow: 0 0 0 4px rgba(0, 168, 89, 0.1);
+}
+
+.toggle-switch {
+  height: 1.5rem;
+  position: relative;
+  width: 3rem;
+}
+
+.toggle-switch input {
+  height: 0;
+  opacity: 0;
+  width: 0;
+}
+
+.toggle-slider {
+  background-color: #e5e7eb;
+  border-radius: 9999px;
+  cursor: pointer;
+  inset: 0;
+  position: absolute;
+  transition: 0.3s;
+}
+
+.toggle-slider::before {
+  background-color: white;
+  border-radius: 50%;
+  bottom: 0.2rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+  content: "";
+  height: 1.1rem;
+  left: 0.2rem;
+  position: absolute;
+  transition: 0.3s;
+  width: 1.1rem;
+}
+
+.toggle-switch input:checked + .toggle-slider {
+  background-color: #00a859;
+}
+
+.toggle-switch input:checked + .toggle-slider::before {
+  transform: translateX(1.5rem);
+}
+
+main {
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
