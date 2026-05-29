@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, Navigate, useSearchParams } from 'react-router-dom'
 import Notice from '../components/Notice'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../lib/useAuth'
@@ -42,13 +42,7 @@ export default function AuthPage() {
   }
 
   if (session) {
-    return (
-      <div className="min-h-[80vh] flex items-center justify-center py-12 px-4 bg-gray-50/50">
-        <div className="w-full max-w-md">
-          <Notice>You are logged in. Open the seller dashboard to manage products.</Notice>
-        </div>
-      </div>
-    )
+    return <Navigate to="/" replace />
   }
 
   return (

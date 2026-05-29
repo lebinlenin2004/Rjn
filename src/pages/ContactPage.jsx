@@ -6,13 +6,22 @@ export default function ContactPage({ bulk = false }) {
 }
 
 function GeneralContactPage() {
-  const [sent, setSent] = useState(false)
+  const [status, setStatus] = useState(null)
 
   async function submit(event) {
     event.preventDefault()
     const data = Object.fromEntries(new FormData(event.currentTarget))
-    if (supabase) await supabase.from('bulk_inquiries').insert({ ...data, company: data.subject, message: data.message })
-    setSent(true)
+    setStatus({ type: 'info', text: 'Sending your message...' })
+
+    if (supabase) {
+      const { error } = await supabase.from('bulk_inquiries').insert({ ...data, company: data.subject, message: data.message })
+      if (error) {
+        setStatus({ type: 'error', text: error.message })
+        return
+      }
+    }
+
+    setStatus({ type: 'success', text: 'Message sent successfully. We will contact you soon.' })
     event.currentTarget.reset()
   }
 
@@ -28,7 +37,7 @@ function GeneralContactPage() {
 
         <div className="bg-white rounded-[2.5rem] shadow-xl shadow-brand-500/5 border border-gray-100 overflow-hidden">
           <div className="p-8 sm:p-12">
-            {sent ? <SuccessMessage text="Message sent successfully." /> : null}
+            {status ? <StatusMessage status={status} /> : null}
             <form onSubmit={submit} className="space-y-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <Field label="Name" name="name" required />
@@ -60,19 +69,28 @@ function GeneralContactPage() {
 }
 
 function BulkOrderPage() {
-  const [sent, setSent] = useState(false)
+  const [status, setStatus] = useState(null)
 
   async function submit(event) {
     event.preventDefault()
     const data = Object.fromEntries(new FormData(event.currentTarget))
-    if (supabase) await supabase.from('bulk_inquiries').insert({
-      company: data.company_name,
-      email: data.email,
-      message: `${data.products_interest}\n\n${data.additional_notes || ''}`,
-      name: data.name,
-      phone: data.phone,
-    })
-    setSent(true)
+    setStatus({ type: 'info', text: 'Sending your bulk order request...' })
+
+    if (supabase) {
+      const { error } = await supabase.from('bulk_inquiries').insert({
+        company: data.company_name,
+        email: data.email,
+        message: `${data.products_interest}\n\n${data.additional_notes || ''}`,
+        name: data.name,
+        phone: data.phone,
+      })
+      if (error) {
+        setStatus({ type: 'error', text: error.message })
+        return
+      }
+    }
+
+    setStatus({ type: 'success', text: 'Your bulk order request was submitted. Our team will contact you soon.' })
     event.currentTarget.reset()
   }
 
@@ -90,7 +108,7 @@ function BulkOrderPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
             <div className="bg-white rounded-[2.5rem] shadow-xl shadow-brand-500/5 border border-gray-100 p-8 sm:p-10">
-              {sent ? <SuccessMessage text="Your bulk order request was submitted." /> : null}
+              {status ? <StatusMessage status={status} /> : null}
               <form onSubmit={submit} className="space-y-6">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <Field label="Contact Name" name="name" required />
@@ -164,11 +182,22 @@ function Info({ icon, text, title }) {
   )
 }
 
-function SuccessMessage({ text }) {
+function StatusMessage({ status }) {
+  const styles = {
+    error: 'bg-red-50 text-red-700 border-red-100',
+    info: 'bg-blue-50 text-blue-700 border-blue-100',
+    success: 'bg-green-50 text-green-700 border-green-100',
+  }
+  const icon = {
+    error: 'fa-circle-exclamation',
+    info: 'fa-circle-info',
+    success: 'fa-circle-check',
+  }
+
   return (
-    <div className="p-4 rounded-2xl flex items-center gap-3 text-sm font-bold bg-green-50 text-green-700 border border-green-100 mb-6">
-      <i className="fa-solid fa-circle-check"></i>
-      {text}
+    <div className={`p-4 rounded-2xl flex items-center gap-3 text-sm font-bold border mb-6 ${styles[status.type]}`}>
+      <i className={`fa-solid ${icon[status.type]}`}></i>
+      {status.text}
     </div>
   )
 }

@@ -7,7 +7,6 @@ import { useAuth } from '../lib/useAuth'
 const emptyProduct = {
   category_id: '',
   description: '',
-  image_url: '',
   min_order_quantity: 1,
   name: '',
   price: '',
@@ -16,10 +15,11 @@ const emptyProduct = {
 export default function DashboardPage() {
   const { session } = useAuth()
   const [categories, setCategories] = useState([])
+  const [imageFile, setImageFile] = useState(null)
   const [form, setForm] = useState(emptyProduct)
   const [products, setProducts] = useState([])
   const [showForm, setShowForm] = useState(false)
-  const [status, setStatus] = useState('')
+  const [status, setStatus] = useState(null)
 
   useEffect(() => {
     fetchCategories().then(setCategories)
@@ -33,21 +33,37 @@ export default function DashboardPage() {
 
   async function submit(event) {
     event.preventDefault()
-    setStatus('Saving product...')
+    const formElement = event.currentTarget
+    setStatus({ type: 'info', text: 'Saving product...' })
+
+    if (!imageFile) {
+      setStatus({ type: 'error', text: 'Please choose a product image.' })
+      return
+    }
+
+    const imageUrl = await uploadProductImage(imageFile, session.user.id)
+    if (!imageUrl) {
+      setStatus({ type: 'error', text: 'Image upload failed. Check your Supabase Storage bucket and policies.' })
+      return
+    }
+
     const { error } = await supabase.from('products').insert({
       ...form,
+      image_url: imageUrl,
       min_order_quantity: Number(form.min_order_quantity),
       price: Number(form.price),
       seller_id: session.user.id,
     })
 
     if (error) {
-      setStatus(error.message)
+      setStatus({ type: 'error', text: error.message })
       return
     }
 
+    formElement.reset()
     setForm(emptyProduct)
-    setStatus('Product saved.')
+    setImageFile(null)
+    setStatus({ type: 'success', text: 'Product saved with image.' })
     fetchProducts().then(setProducts)
   }
 
@@ -68,10 +84,7 @@ export default function DashboardPage() {
         </div>
 
         {status ? (
-          <div className="p-4 rounded-2xl flex items-center gap-3 text-sm font-bold bg-green-50 text-green-700 border border-green-100 mb-8">
-            <i className="fa-solid fa-circle-check"></i>
-            {status}
-          </div>
+          <StatusMessage status={status} />
         ) : null}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
@@ -110,7 +123,11 @@ export default function DashboardPage() {
                     <Field label="Price" name="price" value={form.price} onChange={updateField} type="number" required />
                     <Field label="MOQ" name="min_order_quantity" value={form.min_order_quantity} onChange={updateField} type="number" required />
                   </div>
-                  <Field label="Image URL" name="image_url" value={form.image_url} onChange={updateField} />
+                  <div>
+                    <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2.5 ml-1">Product Image</label>
+                    <input className="rjn-input" name="image" onChange={(event) => setImageFile(event.target.files?.[0] || null)} type="file" accept="image/*" required />
+                    <p className="text-[10px] text-gray-400 font-medium leading-relaxed px-1 mt-2">The image uploads to Supabase Storage before the product is saved.</p>
+                  </div>
                   <div className="pt-6 border-t border-gray-50">
                     <button className="w-full py-4 bg-brand-500 text-white font-bold rounded-2xl hover:bg-brand-600 shadow-lg shadow-brand-500/20 transition-all duration-300 active:scale-[0.98]">
                       List Product Now
@@ -174,6 +191,40 @@ export default function DashboardPage() {
       </div>
     </section>
   )
+}
+
+function StatusMessage({ status }) {
+  const styles = {
+    error: 'bg-red-50 text-red-700 border-red-100',
+    info: 'bg-blue-50 text-blue-700 border-blue-100',
+    success: 'bg-green-50 text-green-700 border-green-100',
+  }
+  const icon = {
+    error: 'fa-circle-exclamation',
+    info: 'fa-circle-info',
+    success: 'fa-circle-check',
+  }
+
+  return (
+    <div className={`p-4 rounded-2xl flex items-center gap-3 text-sm font-bold border mb-8 ${styles[status.type]}`}>
+      <i className={`fa-solid ${icon[status.type]}`}></i>
+      {status.text}
+    </div>
+  )
+}
+
+async function uploadProductImage(file, userId) {
+  const extension = file.name.split('.').pop()
+  const fileName = `${userId}/${Date.now()}-${crypto.randomUUID()}.${extension}`
+  const { error } = await supabase.storage.from('product-images').upload(fileName, file, {
+    cacheControl: '3600',
+    upsert: false,
+  })
+
+  if (error) return null
+
+  const { data } = supabase.storage.from('product-images').getPublicUrl(fileName)
+  return data.publicUrl
 }
 
 function Stat({ color, icon, title, value }) {
