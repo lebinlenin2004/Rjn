@@ -41,15 +41,15 @@ export default function DashboardPage() {
       return
     }
 
-    const imageUrl = await uploadProductImage(imageFile, session.user.id)
-    if (!imageUrl) {
-      setStatus({ type: 'error', text: 'Image upload failed. Check your Supabase Storage bucket and policies.' })
+    const { error: uploadError, publicUrl } = await uploadProductImage(imageFile, session.user.id)
+    if (uploadError) {
+      setStatus({ type: 'error', text: `Image upload failed: ${uploadError}` })
       return
     }
 
     const { error } = await supabase.from('products').insert({
       ...form,
-      image_url: imageUrl,
+      image_url: publicUrl,
       min_order_quantity: Number(form.min_order_quantity),
       price: Number(form.price),
       seller_id: session.user.id,
@@ -221,10 +221,10 @@ async function uploadProductImage(file, userId) {
     upsert: false,
   })
 
-  if (error) return null
+  if (error) return { error: error.message, publicUrl: null }
 
   const { data } = supabase.storage.from('product-images').getPublicUrl(fileName)
-  return data.publicUrl
+  return { error: null, publicUrl: data.publicUrl }
 }
 
 function Stat({ color, icon, title, value }) {
