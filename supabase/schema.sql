@@ -152,9 +152,3 @@ create policy "Users can delete own product images" on storage.objects
     bucket_id = 'product-images'
     and auth.uid()::text = (storage.foldername(name))[1]
   );
-
-insert into public.categories (name, slug) values
-  ('Stationery', 'stationery'),
-  ('Packaging', 'packaging'),
-  ('Cleaning Supplies', 'cleaning-supplies')
-on conflict (slug) do nothing;

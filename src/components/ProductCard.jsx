@@ -57,7 +57,7 @@ export default function ProductCard({ compact = false, product }) {
           </div>
         ) : null}
 
-        <a href={`https://wa.me/919895259919?text=${whatsappText}`} target="_blank" rel="noreferrer" className={`relative z-20 flex items-center justify-center gap-2 ${compact ? 'py-2.5 bg-brand-50 hover:bg-brand-500 hover:text-white text-brand-600' : 'py-3 bg-gray-900 text-white hover:bg-brand-500'} text-xs font-bold rounded-xl transition-all duration-300 shadow-sm hover:shadow-brand-500/25 active:scale-95`}>
+        <a href={`https://wa.me/9710509690664?text=${whatsappText}`} target="_blank" rel="noreferrer" className={`relative z-20 flex items-center justify-center gap-2 ${compact ? 'py-2.5 bg-brand-50 hover:bg-brand-900 hover:text-brand-100 text-brand-700' : 'py-3 bg-brand-900 text-brand-100 hover:bg-brand-800'} text-xs font-bold rounded-xl transition-all duration-300 shadow-sm hover:shadow-brand-900/25 active:scale-95`}>
           <i className="fa-brands fa-whatsapp text-sm"></i> WhatsApp
         </a>
       </div>

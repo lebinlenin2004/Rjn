@@ -49,9 +49,7 @@ export default function AuthPage() {
     <div className="min-h-[80vh] flex items-center justify-center py-12 px-4 bg-gray-50/50">
       <div className={`w-full ${mode === 'signup' ? 'max-w-lg' : 'max-w-md'} bg-white rounded-3xl shadow-sm border border-gray-100 p-10 animate-fade-in`}>
         <div className="text-center mb-10">
-          <div className="w-20 h-20 bg-brand-50 rounded-3xl flex items-center justify-center mx-auto mb-6 text-brand-500">
-            <i className={`fa-solid ${mode === 'signup' ? 'fa-user-plus' : 'fa-right-to-bracket'} text-3xl`}></i>
-          </div>
+          <img src="/rjn-logo.png" alt="RJN logo" className="w-20 h-20 bg-brand-900 rounded-full object-contain p-2 mx-auto mb-6 border border-brand-300 shadow-sm" />
           <h2 className="text-3xl font-black text-gray-900 mb-2">{mode === 'signup' ? 'Create Account' : 'Welcome Back'}</h2>
           <p className="text-gray-500 font-medium">{mode === 'signup' ? 'Join RJN and start managing your products' : 'Login to manage your store and profile'}</p>
         </div>

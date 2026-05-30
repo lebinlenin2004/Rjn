@@ -20,7 +20,7 @@ export default function ProductsPage() {
   }), [searchParams])
 
   useEffect(() => {
-    fetchCategories().then(setCategories)
+    fetchCategories().then(setCategories).catch(() => setCategories([]))
   }, [])
 
   useEffect(() => {
@@ -45,6 +45,7 @@ export default function ProductsPage() {
     setLoading(true)
     fetchProducts(filters)
       .then(setProducts)
+      .catch(() => setProducts([]))
       .finally(() => setLoading(false))
   }, [filters])
 
@@ -84,12 +85,12 @@ export default function ProductsPage() {
 
   return (
     <>
-      <section className="bg-white pt-16 pb-8 border-b border-gray-100">
+      <section className="bg-white pt-16 pb-8 border-b border-brand-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Explore Marketplace</h1>
-              <p className="text-gray-500 text-sm">Discover thousands of premium products from trusted sellers.</p>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">Explore RJN Grocery</h1>
+              <p className="text-gray-500 text-sm">Discover premium kitchen essentials from trusted RJN suppliers.</p>
             </div>
 
             <div className="w-full md:max-w-md">
@@ -105,7 +106,7 @@ export default function ProductsPage() {
         </div>
       </section>
 
-      <section className="sticky top-14 z-40 bg-white/80 backdrop-blur-md border-b border-gray-100 py-4">
+      <section className="sticky top-14 z-40 bg-[#fffaf0]/90 backdrop-blur-md border-b border-brand-100 py-4">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2 overflow-x-auto no-scrollbar w-full md:w-auto">
@@ -162,7 +163,7 @@ export default function ProductsPage() {
         </div>
       </section>
 
-      <section className="py-12 bg-gray-50/50 min-h-[60vh]">
+      <section className="py-12 bg-[#fffaf0] min-h-[60vh]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {loading ? <p className="text-sm font-bold text-gray-400 mb-6">Loading products...</p> : null}
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">

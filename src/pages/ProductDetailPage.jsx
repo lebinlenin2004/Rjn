@@ -9,13 +9,20 @@ export default function ProductDetailPage() {
   const { id } = useParams()
   const { session, supabaseReady } = useAuth()
   const [comment, setComment] = useState('')
+  const [loading, setLoading] = useState(true)
   const [product, setProduct] = useState(null)
   const [rating, setRating] = useState(5)
   const [related, setRelated] = useState([])
 
   useEffect(() => {
-    fetchProduct(id).then(setProduct)
-    fetchProducts().then((items) => setRelated(items.filter((item) => item.id !== id).slice(0, 4)))
+    setLoading(true)
+    fetchProduct(id)
+      .then(setProduct)
+      .catch(() => setProduct(null))
+      .finally(() => setLoading(false))
+    fetchProducts()
+      .then((items) => setRelated(items.filter((item) => item.id !== id).slice(0, 4)))
+      .catch(() => setRelated([]))
   }, [id])
 
   async function submitFeedback(event) {
@@ -33,7 +40,20 @@ export default function ProductDetailPage() {
     }
   }
 
-  if (!product) return <section className="py-12 bg-white"><div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-gray-500">Loading product...</div></section>
+  if (loading) return <section className="py-12 bg-white"><div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-gray-500">Loading product...</div></section>
+  if (!product) {
+    return (
+      <section className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h1 className="text-3xl font-bold text-gray-900 mb-3">Product not found</h1>
+          <p className="text-gray-500 mb-8">This item is unavailable or has been removed.</p>
+          <Link to="/products" className="inline-flex items-center px-8 py-3 bg-brand-500 text-white font-bold rounded-2xl hover:bg-brand-600 transition-all shadow-lg shadow-brand-500/20">
+            Back to Products
+          </Link>
+        </div>
+      </section>
+    )
+  }
 
   const image = product.image_url || product.image || '/placeholder-product.svg'
   const price = `AUED ${product.price}`
@@ -84,12 +104,12 @@ export default function ProductDetailPage() {
             </div>
 
             <div className="space-y-4 mb-8">
-              <a href={`https://wa.me/919895259919?text=${whatsappText}`} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-3 w-full py-4 bg-green-600 text-white text-lg font-bold rounded-2xl hover:bg-green-700 transition-all duration-300 shadow-xl shadow-green-600/20 active:scale-[0.98]">
+              <a href={`https://wa.me/9710509690664?text=${whatsappText}`} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-3 w-full py-4 bg-brand-900 text-brand-100 text-lg font-bold rounded-2xl hover:bg-brand-800 transition-all duration-300 shadow-xl shadow-brand-900/20 active:scale-[0.98]">
                 <i className="fa-brands fa-whatsapp text-2xl"></i>
                 Order via WhatsApp
               </a>
               <div className="flex items-center justify-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-widest">
-                <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                <span className="w-2 h-2 bg-brand-300 rounded-full animate-pulse"></span>
                 Seller typically responds within minutes
               </div>
             </div>

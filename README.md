@@ -10,7 +10,6 @@ RJN Wholesale is a React rebuild of the original Django wholesale e-commerce pro
 - Seller product creation flow
 - Product feedback with ratings
 - Supabase SQL schema with tables and row-level security policies
-- Sample fallback catalog while Supabase keys are not configured
 
 ## Tech Stack
 
@@ -68,11 +67,10 @@ The included `vercel.json` rewrites every route to `index.html`, so React Router
 - `products`: seller product listings
 - `feedback`: ratings and comments for products
 - `bulk_inquiries`: contact and bulk order inquiries
-- `site_settings`: WhatsApp/admin configuration placeholder
+- `site_settings`: WhatsApp/admin configuration
 
 ## Next Build Steps
 
-- Add Supabase Storage uploads instead of image URL input
 - Add edit/delete product actions in the dashboard
 - Add admin-only screens for inquiries, settings, and category management
 - Add Edge Functions for email notifications and rate limiting

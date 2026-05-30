@@ -61,7 +61,7 @@ function GeneralContactPage() {
         <div className="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-8 text-center">
           <Info icon="fa-envelope" title="Email Us" text="rjnfoods@gmail.com" />
           <Info icon="fa-phone" title="Call Us" text="0509690664" />
-          <Info icon="fa-location-dot" title="Visit Us" text="123 Market St, City" />
+          <Info icon="fa-location-dot" title="Visit Us" text="Contact us for location details" />
         </div>
       </div>
     </div>
@@ -147,8 +147,8 @@ function BulkOrderPage() {
             <div className="bg-white rounded-[2.5rem] p-8 border border-gray-100 shadow-sm">
               <h3 className="text-xl font-bold text-gray-900 mb-4">Need Help?</h3>
               <p className="text-sm text-gray-500 mb-6">If you have urgent questions about bulk ordering, feel free to contact our sales team directly.</p>
-              <a href="mailto:sales@rjn.com" className="flex items-center gap-3 text-brand-600 font-bold hover:gap-4 transition-all group">
-                <span>sales@rjn.com</span>
+              <a href="mailto:rjnfoods@gmail.com" className="flex items-center gap-3 text-brand-600 font-bold hover:gap-4 transition-all group">
+                <span>rjnfoods@gmail.com</span>
                 <i className="fa-solid fa-arrow-right text-sm"></i>
               </a>
             </div>

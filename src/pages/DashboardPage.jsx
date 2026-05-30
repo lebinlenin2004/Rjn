@@ -22,8 +22,8 @@ export default function DashboardPage() {
   const [status, setStatus] = useState(null)
 
   useEffect(() => {
-    fetchCategories().then(setCategories)
-    fetchProducts().then(setProducts)
+    fetchCategories().then(setCategories).catch(() => setCategories([]))
+    fetchProducts().then(setProducts).catch(() => setProducts([]))
   }, [])
 
   function updateField(event) {
@@ -90,7 +90,7 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
           <Stat icon="fa-box-archive" title="Total Listings" value={products.length} color="brand" />
           <Stat icon="fa-eye" title="Active Views" value="--" color="blue" />
-          <Stat icon="fa-star" title="Shop Rating" value="4.9" color="amber" />
+          <Stat icon="fa-star" title="Shop Rating" value="--" color="amber" />
         </div>
 
         {showForm ? (
@@ -173,7 +173,7 @@ export default function DashboardPage() {
                       <span className="px-3 py-1 text-[10px] font-bold bg-gray-100 text-gray-500 rounded-full uppercase tracking-widest">{product.category?.name || 'Kitchen'}</span>
                     </td>
                     <td className="py-5"><span className="text-sm font-bold text-brand-600">AUED {product.price}</span></td>
-                    <td className="py-5 text-sm font-medium text-gray-400">{product.created_at ? new Date(product.created_at).toLocaleDateString() : 'Today'}</td>
+                    <td className="py-5 text-sm font-medium text-gray-400">{product.created_at ? new Date(product.created_at).toLocaleDateString() : '--'}</td>
                     <td className="pr-8 py-5 text-right">
                       <div className="flex items-center justify-end gap-2">
                         <Link to={`/products/${product.id}`} className="inline-flex items-center gap-2 px-4 py-2 bg-white text-brand-600 text-xs font-bold border border-brand-100 rounded-xl hover:bg-brand-500 hover:text-white transition-all shadow-sm">
@@ -186,6 +186,11 @@ export default function DashboardPage() {
                 ))}
               </tbody>
             </table>
+            {products.length === 0 ? (
+              <div className="px-8 py-12 text-center text-sm font-semibold text-gray-500">
+                No products have been listed yet.
+              </div>
+            ) : null}
           </div>
         </div>
       </div>
