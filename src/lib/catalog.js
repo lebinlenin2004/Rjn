@@ -1,4 +1,5 @@
 import { supabase } from './supabaseClient'
+import { normalizeProductImages } from './productImages'
 
 export async function fetchCategories() {
   if (!supabase) return []
@@ -45,7 +46,8 @@ export async function fetchProducts(filters = {}) {
   return (data || []).map((product) => ({
     ...product,
     rating: averageRating(product.feedback),
-    image_url: product.image_url || product.image,
+    image_url: normalizeProductImages(product)[0] || product.image_url || product.image,
+    image_urls: normalizeProductImages(product),
     show_price: product.show_price ?? true,
   }))
 }
@@ -64,7 +66,8 @@ export async function fetchSellerProducts(sellerId) {
 
   return (data || []).map((product) => ({
     ...product,
-    image_url: product.image_url || product.image,
+    image_url: normalizeProductImages(product)[0] || product.image_url || product.image,
+    image_urls: normalizeProductImages(product),
   }))
 }
 
@@ -102,7 +105,8 @@ export async function fetchProduct(id) {
   if (error) throw error
   return {
     ...data,
-    image_url: data.image_url || data.image,
+    image_url: normalizeProductImages(data)[0] || data.image_url || data.image,
+    image_urls: normalizeProductImages(data),
     rating: averageRating(data.feedback),
     show_price: data.show_price ?? true,
     show_seller: data.show_seller ?? true,

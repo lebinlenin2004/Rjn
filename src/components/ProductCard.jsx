@@ -4,7 +4,7 @@ import { formatPrice, hasPrice } from '../lib/price'
 export default function ProductCard({ compact = false, product }) {
   const price = formatPrice(product.price)
   const showPrice = hasPrice(product)
-  const whatsappText = encodeURIComponent(`*NEW ORDER INQUIRY - RJN STORE*\n\n*Product:* ${product.name}\n*Category:* ${product.category?.name || 'Kitchen'}${showPrice ? `\n*Price:* ${price}` : ''}\n\nHello! I would like to order this item. Is it available?\n\n_Sent from RJN Store Website_`)
+  const whatsappText = encodeURIComponent(`*NEW ORDER INQUIRY - RJN FOODS*\n\n*Product:* ${product.name}\n*Category:* ${product.category?.name || 'Kitchen'}${showPrice ? `\n*Price:* ${price}` : ''}\n\nHello! I would like to order this item. Is it available?\n\n_Sent from RJN Foods Website_`)
   const image = product.image_url || product.image || '/placeholder-product.svg'
 
   return (

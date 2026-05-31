@@ -17,7 +17,7 @@ export default function DashboardPage() {
   const { session } = useAuth()
   const [categories, setCategories] = useState([])
   const [editingProductId, setEditingProductId] = useState(null)
-  const [imageFile, setImageFile] = useState(null)
+  const [imageFiles, setImageFiles] = useState([])
   const [form, setForm] = useState(emptyProduct)
   const [products, setProducts] = useState([])
   const [showForm, setShowForm] = useState(false)
@@ -42,25 +42,43 @@ export default function DashboardPage() {
     setForm((current) => ({ ...current, [name]: value }))
   }
 
+  function updateImages(event) {
+    const files = Array.from(event.target.files || [])
+    if (files.length > 3) {
+      event.target.value = ''
+      setImageFiles([])
+      setStatus({ type: 'error', text: 'You can upload a maximum of three product images.' })
+      return
+    }
+
+    setImageFiles(files)
+    setStatus(null)
+  }
+
   async function submit(event) {
     event.preventDefault()
     const formElement = event.currentTarget
     const isEditing = Boolean(editingProductId)
     setStatus({ type: 'info', text: isEditing ? 'Updating product...' : 'Saving product...' })
 
-    if (!isEditing && !imageFile) {
-      setStatus({ type: 'error', text: 'Please choose a product image.' })
+    if (!isEditing && imageFiles.length === 0) {
+      setStatus({ type: 'error', text: 'Please choose at least one product image.' })
       return
     }
 
-    let imageUrl = null
-    if (imageFile) {
-      const { error: uploadError, publicUrl } = await uploadProductImage(imageFile, session.user.id)
-      if (uploadError) {
-        setStatus({ type: 'error', text: `Image upload failed: ${uploadError}` })
+    if (imageFiles.length > 3) {
+      setStatus({ type: 'error', text: 'You can upload a maximum of three product images.' })
+      return
+    }
+
+    let imageUrls = []
+    if (imageFiles.length) {
+      const uploadResult = await uploadProductImages(imageFiles, session.user.id)
+      if (uploadResult.error) {
+        setStatus({ type: 'error', text: `Image upload failed: ${uploadResult.error}` })
         return
       }
-      imageUrl = publicUrl
+      imageUrls = uploadResult.publicUrls
     }
 
     const payload = {
@@ -71,7 +89,10 @@ export default function DashboardPage() {
       price: form.price === '' ? null : Number(form.price),
     }
 
-    if (imageUrl) payload.image_url = imageUrl
+    if (imageUrls.length) {
+      payload.image_url = imageUrls[0]
+      payload.image_urls = imageUrls
+    }
 
     const { error } = isEditing
       ? await supabase
@@ -81,7 +102,8 @@ export default function DashboardPage() {
         .eq('seller_id', session.user.id)
       : await supabase.from('products').insert({
         ...payload,
-        image_url: imageUrl,
+        image_url: imageUrls[0],
+        image_urls: imageUrls,
         is_active: true,
         seller_id: session.user.id,
       })
@@ -106,7 +128,7 @@ export default function DashboardPage() {
       name: product.name || '',
       price: product.price || '',
     })
-    setImageFile(null)
+    setImageFiles([])
     setShowForm(true)
     setStatus(null)
     window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -115,7 +137,7 @@ export default function DashboardPage() {
   function resetForm() {
     setEditingProductId(null)
     setForm(emptyProduct)
-    setImageFile(null)
+    setImageFiles([])
   }
 
   async function deleteProduct(product) {
@@ -200,8 +222,15 @@ export default function DashboardPage() {
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2.5 ml-1">Product Image</label>
-                    <input className="rjn-input" name="image" onChange={(event) => setImageFile(event.target.files?.[0] || null)} type="file" accept="image/*" required={!editingProductId} />
-                    <p className="text-[10px] text-gray-400 font-medium leading-relaxed px-1 mt-2">{editingProductId ? 'Choose a new image only if you want to replace the current one.' : 'The image uploads to Supabase Storage before the product is saved.'}</p>
+                    <input className="rjn-input" name="image" onChange={updateImages} type="file" accept="image/*" multiple required={!editingProductId} />
+                    <p className="text-[10px] text-gray-400 font-medium leading-relaxed px-1 mt-2">{editingProductId ? 'Choose one to three images only if you want to replace the current images.' : 'Add at least one image and up to three images. They upload to Supabase Storage before the product is saved.'}</p>
+                    {imageFiles.length ? (
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {imageFiles.map((file) => (
+                          <span key={`${file.name}-${file.size}`} className="px-3 py-1 bg-brand-50 text-brand-700 rounded-full text-xs font-bold border border-brand-100">{file.name}</span>
+                        ))}
+                      </div>
+                    ) : null}
                   </div>
                   <div className="pt-6 border-t border-gray-50 flex flex-col sm:flex-row gap-3">
                     <button className="flex-1 py-4 bg-brand-500 text-white font-bold rounded-2xl hover:bg-brand-600 shadow-lg shadow-brand-500/20 transition-all duration-300 active:scale-[0.98]">
@@ -304,6 +333,18 @@ function StatusMessage({ status }) {
       {status.text}
     </div>
   )
+}
+
+async function uploadProductImages(files, userId) {
+  const publicUrls = []
+
+  for (const file of files) {
+    const { error, publicUrl } = await uploadProductImage(file, userId)
+    if (error) return { error, publicUrls: [] }
+    publicUrls.push(publicUrl)
+  }
+
+  return { error: null, publicUrls }
 }
 
 async function uploadProductImage(file, userId) {

@@ -65,10 +65,11 @@ export default function ProductDetailPage() {
     )
   }
 
-  const image = product.image_url || product.image || '/placeholder-product.svg'
+  const images = product.image_urls?.length ? product.image_urls : [product.image_url || product.image || '/placeholder-product.svg']
+  const image = images[0] || '/placeholder-product.svg'
   const price = formatPrice(product.price)
   const showPrice = hasPrice(product)
-  const whatsappText = encodeURIComponent(`*NEW ORDER INQUIRY - RJN STORE*\n\n*Product:* ${product.name}\n*Category:* ${product.category?.name || 'Kitchen'}${showPrice ? `\n*Price:* ${price}` : ''}\n\nHello! I am interested in this item. Is it available for delivery?\n\n_Sent from RJN Store Website_`)
+  const whatsappText = encodeURIComponent(`*NEW ORDER INQUIRY - RJN FOODS*\n\n*Product:* ${product.name}\n*Category:* ${product.category?.name || 'Kitchen'}${showPrice ? `\n*Price:* ${price}` : ''}\n\nHello! I am interested in this item. Is it available for delivery?\n\n_Sent from RJN Foods Website_`)
   const feedback = [...(product.feedback || [])].sort((first, second) => new Date(second.created_at) - new Date(first.created_at))
   const reviewCount = feedback.length
   const averageRating = Number(product.rating || 0)
@@ -97,7 +98,7 @@ export default function ProductDetailPage() {
             <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm">
               <div className="grid grid-cols-[72px_1fr] gap-4">
                 <div className="space-y-3">
-                  {[image, '/placeholder-product.svg'].map((thumb, index) => (
+                  {images.map((thumb, index) => (
                     <button key={`${thumb}-${index}`} className={`w-[72px] h-[72px] rounded-xl border ${index === 0 ? 'border-brand-500' : 'border-gray-100'} bg-white overflow-hidden p-1 hover:border-brand-400 transition-colors`}>
                       <img src={thumb} alt={`${product.name} thumbnail ${index + 1}`} className="w-full h-full object-cover rounded-lg" />
                     </button>
@@ -109,12 +110,8 @@ export default function ProductDetailPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <a href={`https://wa.me/9710509690664?text=${whatsappText}`} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 py-4 bg-amber-500 text-white text-sm font-black rounded-xl hover:bg-amber-600 transition-all shadow-lg shadow-amber-500/20 active:scale-[0.98]">
-                <i className="fa-solid fa-cart-shopping"></i>
-                Order Now
-              </a>
-              <a href={`https://wa.me/9710509690664?text=${whatsappText}`} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 py-4 bg-brand-900 text-brand-100 text-sm font-black rounded-xl hover:bg-brand-800 transition-all shadow-lg shadow-brand-900/20 active:scale-[0.98]">
+            <div>
+              <a href={`https://wa.me/9710509690664?text=${whatsappText}`} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 w-full py-4 bg-brand-900 text-brand-100 text-sm font-black rounded-xl hover:bg-brand-800 transition-all shadow-lg shadow-brand-900/20 active:scale-[0.98]">
                 <i className="fa-brands fa-whatsapp text-lg"></i>
                 WhatsApp
               </a>

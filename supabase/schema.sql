@@ -25,6 +25,7 @@ create table if not exists public.products (
   price numeric(12, 2) check (price >= 0),
   min_order_quantity integer not null default 1 check (min_order_quantity > 0),
   image_url text,
+  image_urls text[] not null default '{}',
   stock_status text not null default 'available' check (stock_status in ('available', 'limited', 'unavailable')),
   is_active boolean not null default true,
   created_at timestamptz not null default now(),
@@ -89,6 +90,7 @@ alter table public.bulk_inquiries enable row level security;
 alter table public.site_settings enable row level security;
 
 alter table public.products alter column price drop not null;
+alter table public.products add column if not exists image_urls text[] not null default '{}';
 
 drop policy if exists "Profiles are readable by everyone" on public.profiles;
 create policy "Profiles are readable by everyone" on public.profiles
