@@ -16,9 +16,11 @@ export default function ProductDetailPage() {
   const [product, setProduct] = useState(null)
   const [rating, setRating] = useState(5)
   const [related, setRelated] = useState([])
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0)
 
   useEffect(() => {
     setLoading(true)
+    setSelectedImageIndex(0)
     fetchProduct(id)
       .then(setProduct)
       .catch(() => setProduct(null))
@@ -66,7 +68,7 @@ export default function ProductDetailPage() {
   }
 
   const images = product.image_urls?.length ? product.image_urls : [product.image_url || product.image || '/placeholder-product.svg']
-  const image = images[0] || '/placeholder-product.svg'
+  const image = images[selectedImageIndex] || images[0] || '/placeholder-product.svg'
   const price = formatPrice(product.price)
   const showPrice = hasPrice(product)
   const whatsappText = encodeURIComponent(`*NEW ORDER INQUIRY - RJN FOODS*\n\n*Product:* ${product.name}\n*Category:* ${product.category?.name || 'Kitchen'}${showPrice ? `\n*Price:* ${price}` : ''}\n\nHello! I am interested in this item. Is it available for delivery?\n\n_Sent from RJN Foods Website_`)
@@ -99,7 +101,7 @@ export default function ProductDetailPage() {
               <div className="grid grid-cols-[72px_1fr] gap-4">
                 <div className="space-y-3">
                   {images.map((thumb, index) => (
-                    <button key={`${thumb}-${index}`} className={`w-[72px] h-[72px] rounded-xl border ${index === 0 ? 'border-brand-500' : 'border-gray-100'} bg-white overflow-hidden p-1 hover:border-brand-400 transition-colors`}>
+                    <button key={`${thumb}-${index}`} onClick={() => setSelectedImageIndex(index)} className={`w-[72px] h-[72px] rounded-xl border ${index === selectedImageIndex ? 'border-brand-500 ring-2 ring-brand-100' : 'border-gray-100'} bg-white overflow-hidden p-1 hover:border-brand-400 transition-colors`} aria-label={`Show product image ${index + 1}`} type="button">
                       <img src={thumb} alt={`${product.name} thumbnail ${index + 1}`} className="w-full h-full object-cover rounded-lg" />
                     </button>
                   ))}
