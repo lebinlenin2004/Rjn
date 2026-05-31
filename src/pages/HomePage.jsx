@@ -26,7 +26,7 @@ export default function HomePage() {
             <div className="text-left">
               <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/10 text-brand-100 border border-brand-300/30 rounded-full text-xs font-bold mb-6">
                 <span className="flex h-2 w-2 rounded-full bg-brand-300 animate-pulse"></span>
-                RJN premium grocery supply
+                RJN premium food supply
               </div>
               <h1 className="text-5xl md:text-6xl font-extrabold text-white mb-6 leading-[1.1] tracking-tight">
                 Everything for your <br />

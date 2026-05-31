@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { fetchCategories, fetchProducts } from '../lib/catalog'
+import { fetchCategories, fetchSellerProducts } from '../lib/catalog'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../lib/useAuth'
 
@@ -15,6 +15,7 @@ const emptyProduct = {
 export default function DashboardPage() {
   const { session } = useAuth()
   const [categories, setCategories] = useState([])
+  const [editingProductId, setEditingProductId] = useState(null)
   const [imageFile, setImageFile] = useState(null)
   const [form, setForm] = useState(emptyProduct)
   const [products, setProducts] = useState([])
@@ -23,8 +24,17 @@ export default function DashboardPage() {
 
   useEffect(() => {
     fetchCategories().then(setCategories).catch(() => setCategories([]))
-    fetchProducts().then(setProducts).catch(() => setProducts([]))
   }, [])
+
+  const loadProducts = useCallback(() => {
+    return fetchSellerProducts(session.user.id).then(setProducts).catch(() => setProducts([]))
+  }, [session?.user?.id])
+
+  useEffect(() => {
+    if (!session?.user?.id) return
+
+    loadProducts()
+  }, [loadProducts, session?.user?.id])
 
   function updateField(event) {
     const { name, value } = event.target
@@ -34,26 +44,46 @@ export default function DashboardPage() {
   async function submit(event) {
     event.preventDefault()
     const formElement = event.currentTarget
-    setStatus({ type: 'info', text: 'Saving product...' })
+    const isEditing = Boolean(editingProductId)
+    setStatus({ type: 'info', text: isEditing ? 'Updating product...' : 'Saving product...' })
 
-    if (!imageFile) {
+    if (!isEditing && !imageFile) {
       setStatus({ type: 'error', text: 'Please choose a product image.' })
       return
     }
 
-    const { error: uploadError, publicUrl } = await uploadProductImage(imageFile, session.user.id)
-    if (uploadError) {
-      setStatus({ type: 'error', text: `Image upload failed: ${uploadError}` })
-      return
+    let imageUrl = null
+    if (imageFile) {
+      const { error: uploadError, publicUrl } = await uploadProductImage(imageFile, session.user.id)
+      if (uploadError) {
+        setStatus({ type: 'error', text: `Image upload failed: ${uploadError}` })
+        return
+      }
+      imageUrl = publicUrl
     }
 
-    const { error } = await supabase.from('products').insert({
-      ...form,
-      image_url: publicUrl,
+    const payload = {
+      category_id: form.category_id,
+      description: form.description,
       min_order_quantity: Number(form.min_order_quantity),
+      name: form.name,
       price: Number(form.price),
-      seller_id: session.user.id,
-    })
+    }
+
+    if (imageUrl) payload.image_url = imageUrl
+
+    const { error } = isEditing
+      ? await supabase
+        .from('products')
+        .update({ ...payload, updated_at: new Date().toISOString() })
+        .eq('id', editingProductId)
+        .eq('seller_id', session.user.id)
+      : await supabase.from('products').insert({
+        ...payload,
+        image_url: imageUrl,
+        is_active: true,
+        seller_id: session.user.id,
+      })
 
     if (error) {
       setStatus({ type: 'error', text: error.message })
@@ -61,10 +91,51 @@ export default function DashboardPage() {
     }
 
     formElement.reset()
+    resetForm()
+    setStatus({ type: 'success', text: isEditing ? 'Product updated.' : 'Product saved with image.' })
+    loadProducts()
+  }
+
+  function startEditing(product) {
+    setEditingProductId(product.id)
+    setForm({
+      category_id: product.category_id || '',
+      description: product.description || '',
+      min_order_quantity: product.min_order_quantity || 1,
+      name: product.name || '',
+      price: product.price || '',
+    })
+    setImageFile(null)
+    setShowForm(true)
+    setStatus(null)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  function resetForm() {
+    setEditingProductId(null)
     setForm(emptyProduct)
     setImageFile(null)
-    setStatus({ type: 'success', text: 'Product saved with image.' })
-    fetchProducts().then(setProducts)
+  }
+
+  async function deleteProduct(product) {
+    const confirmed = window.confirm(`Are you sure you want to delete "${product.name}"?`)
+    if (!confirmed) return
+
+    setStatus({ type: 'info', text: 'Deleting product...' })
+    const { error } = await supabase
+      .from('products')
+      .update({ is_active: false, updated_at: new Date().toISOString() })
+      .eq('id', product.id)
+      .eq('seller_id', session.user.id)
+
+    if (error) {
+      setStatus({ type: 'error', text: error.message })
+      return
+    }
+
+    if (editingProductId === product.id) resetForm()
+    setProducts((current) => current.filter((item) => item.id !== product.id))
+    setStatus({ type: 'success', text: 'Product deleted.' })
   }
 
   return (
@@ -76,9 +147,12 @@ export default function DashboardPage() {
             <p className="text-gray-500 text-sm">Overview of your shop and inventory management.</p>
           </div>
           <div className="flex items-center gap-3">
-            <button onClick={() => setShowForm((value) => !value)} className="flex items-center gap-2 px-6 py-2.5 bg-brand-500 text-white text-sm font-bold rounded-2xl hover:bg-brand-600 shadow-lg shadow-brand-500/20 transition-all active:scale-95">
+            <button onClick={() => {
+              if (showForm && editingProductId) resetForm()
+              setShowForm((value) => !value)
+            }} className="flex items-center gap-2 px-6 py-2.5 bg-brand-500 text-white text-sm font-bold rounded-2xl hover:bg-brand-600 shadow-lg shadow-brand-500/20 transition-all active:scale-95">
               <i className="fa-solid fa-plus"></i>
-              <span>List New Product</span>
+              <span>{showForm ? 'Close Form' : 'List New Product'}</span>
             </button>
           </div>
         </div>
@@ -103,8 +177,8 @@ export default function DashboardPage() {
                     <i className="fa-solid fa-plus text-white text-3xl"></i>
                   </div>
                   <div>
-                    <h2 className="text-3xl font-black text-white">Add Product</h2>
-                    <p className="text-brand-100 font-medium mt-1">List your item for buyers</p>
+                    <h2 className="text-3xl font-black text-white">{editingProductId ? 'Edit Product' : 'Add Product'}</h2>
+                    <p className="text-brand-100 font-medium mt-1">{editingProductId ? 'Update your item details' : 'List your item for buyers'}</p>
                   </div>
                 </div>
               </div>
@@ -125,13 +199,18 @@ export default function DashboardPage() {
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2.5 ml-1">Product Image</label>
-                    <input className="rjn-input" name="image" onChange={(event) => setImageFile(event.target.files?.[0] || null)} type="file" accept="image/*" required />
-                    <p className="text-[10px] text-gray-400 font-medium leading-relaxed px-1 mt-2">The image uploads to Supabase Storage before the product is saved.</p>
+                    <input className="rjn-input" name="image" onChange={(event) => setImageFile(event.target.files?.[0] || null)} type="file" accept="image/*" required={!editingProductId} />
+                    <p className="text-[10px] text-gray-400 font-medium leading-relaxed px-1 mt-2">{editingProductId ? 'Choose a new image only if you want to replace the current one.' : 'The image uploads to Supabase Storage before the product is saved.'}</p>
                   </div>
-                  <div className="pt-6 border-t border-gray-50">
-                    <button className="w-full py-4 bg-brand-500 text-white font-bold rounded-2xl hover:bg-brand-600 shadow-lg shadow-brand-500/20 transition-all duration-300 active:scale-[0.98]">
-                      List Product Now
+                  <div className="pt-6 border-t border-gray-50 flex flex-col sm:flex-row gap-3">
+                    <button className="flex-1 py-4 bg-brand-500 text-white font-bold rounded-2xl hover:bg-brand-600 shadow-lg shadow-brand-500/20 transition-all duration-300 active:scale-[0.98]">
+                      {editingProductId ? 'Update Product' : 'List Product Now'}
                     </button>
+                    {editingProductId ? (
+                      <button type="button" onClick={resetForm} className="px-6 py-4 bg-gray-100 text-gray-600 font-bold rounded-2xl hover:bg-gray-200 transition-all">
+                        Cancel
+                      </button>
+                    ) : null}
                   </div>
                 </form>
               </div>
@@ -180,6 +259,14 @@ export default function DashboardPage() {
                           <i className="fa-solid fa-eye"></i>
                           <span>View</span>
                         </Link>
+                        <button onClick={() => startEditing(product)} className="inline-flex items-center gap-2 px-4 py-2 bg-white text-blue-600 text-xs font-bold border border-blue-100 rounded-xl hover:bg-blue-500 hover:text-white transition-all shadow-sm">
+                          <i className="fa-solid fa-pen"></i>
+                          <span>Edit</span>
+                        </button>
+                        <button onClick={() => deleteProduct(product)} className="inline-flex items-center gap-2 px-4 py-2 bg-white text-red-600 text-xs font-bold border border-red-100 rounded-xl hover:bg-red-500 hover:text-white transition-all shadow-sm">
+                          <i className="fa-solid fa-trash"></i>
+                          <span>Delete</span>
+                        </button>
                       </div>
                     </td>
                   </tr>

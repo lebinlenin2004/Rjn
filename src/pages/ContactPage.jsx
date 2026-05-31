@@ -61,7 +61,11 @@ function GeneralContactPage() {
         <div className="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-8 text-center">
           <Info icon="fa-envelope" title="Email Us" text="rjnfoods@gmail.com" />
           <Info icon="fa-phone" title="Call Us" text="0509690664" />
-          <Info icon="fa-location-dot" title="Visit Us" text="Contact us for location details" />
+          <Info icon="fa-location-dot" title="Visit Us" text="Rashed al shamsi building
+Algeria - st
+Al Rawda 1
+Ajman
+UAE" />
         </div>
       </div>
     </div>

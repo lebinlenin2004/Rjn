@@ -3,7 +3,11 @@ import { supabase } from './supabaseClient'
 export async function fetchCategories() {
   if (!supabase) return []
 
-  const { data, error } = await supabase.from('categories').select('*').order('name')
+  const { data, error } = await supabase
+    .from('categories')
+    .select('*')
+    .order('created_at', { ascending: true })
+    .order('id', { ascending: true })
   if (error) throw error
   return data || []
 }
@@ -43,6 +47,24 @@ export async function fetchProducts(filters = {}) {
     rating: averageRating(product.feedback),
     image_url: product.image_url || product.image,
     show_price: product.show_price ?? true,
+  }))
+}
+
+export async function fetchSellerProducts(sellerId) {
+  if (!supabase || !sellerId) return []
+
+  const { data, error } = await supabase
+    .from('products')
+    .select('*, category:categories(*)')
+    .eq('seller_id', sellerId)
+    .eq('is_active', true)
+    .order('created_at', { ascending: false })
+
+  if (error) throw error
+
+  return (data || []).map((product) => ({
+    ...product,
+    image_url: product.image_url || product.image,
   }))
 }
 

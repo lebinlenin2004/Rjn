@@ -24,6 +24,9 @@ export default function Layout() {
   }, [])
 
   async function signOut() {
+    const confirmed = window.confirm('Are you sure you want to sign out?')
+    if (!confirmed) return
+
     await supabase?.auth.signOut()
     navigate('/')
   }
@@ -142,7 +145,7 @@ export default function Layout() {
               </Link>
               <p className="text-sm text-gray-400 leading-relaxed">Premium groceries, kitchen essentials, and wholesale supplies with RJN quality.</p>
             </div>
-            <FooterColumn title="Grocery Store" links={[['All Products', '/products'], ['Bulk Orders', '/bulk-order'], ['Contact RJN', '/contact']]} />
+            <FooterColumn title="Foods Store" links={[['All Products', '/products'], ['Bulk Orders', '/bulk-order'], ['Contact RJN', '/contact']]} />
             <FooterColumn title="Support" links={[['Contact Us', '/contact'], ['Bulk Orders', '/bulk-order'], ['About Us', '/']]} />
             <div>
               <h4 className="text-white font-bold mb-6">Connect</h4>
@@ -155,7 +158,7 @@ export default function Layout() {
             </div>
           </div>
           <div className="pt-8 border-t border-gray-800 flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-xs text-gray-500">&copy; {new Date().getFullYear()} RJN Grocery. All rights reserved.</p>
+            <p className="text-xs text-gray-500">&copy; {new Date().getFullYear()} RJN Foods. All rights reserved.</p>
             <div className="flex gap-6 text-gray-400">
               <a href="#" className="hover:text-white transition-colors"><i className="fa-brands fa-twitter"></i></a>
               <a href="#" className="hover:text-white transition-colors"><i className="fa-brands fa-facebook"></i></a>
