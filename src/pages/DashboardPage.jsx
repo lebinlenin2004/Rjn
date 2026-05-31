@@ -15,6 +15,7 @@ const emptyProduct = {
 
 export default function DashboardPage() {
   const { session } = useAuth()
+  const userId = session?.user?.id
   const [categories, setCategories] = useState([])
   const [editingProductId, setEditingProductId] = useState(null)
   const [imageFiles, setImageFiles] = useState([])
@@ -22,36 +23,33 @@ export default function DashboardPage() {
   const [products, setProducts] = useState([])
   const [showForm, setShowForm] = useState(false)
   const [status, setStatus] = useState(null)
+  const selectedImageFiles = imageFiles.filter(Boolean)
 
   useEffect(() => {
     fetchCategories().then(setCategories).catch(() => setCategories([]))
   }, [])
 
   const loadProducts = useCallback(() => {
-    return fetchSellerProducts(session.user.id).then(setProducts).catch(() => setProducts([]))
-  }, [session?.user?.id])
+    return fetchSellerProducts(userId).then(setProducts).catch(() => setProducts([]))
+  }, [userId])
 
   useEffect(() => {
-    if (!session?.user?.id) return
+    if (!userId) return
 
     loadProducts()
-  }, [loadProducts, session?.user?.id])
+  }, [loadProducts, userId])
 
   function updateField(event) {
     const { name, value } = event.target
     setForm((current) => ({ ...current, [name]: value }))
   }
 
-  function updateImages(event) {
-    const files = Array.from(event.target.files || [])
-    if (files.length > 3) {
-      event.target.value = ''
-      setImageFiles([])
-      setStatus({ type: 'error', text: 'You can upload a maximum of three product images.' })
-      return
-    }
-
-    setImageFiles(files)
+  function updateImageSlot(index, file) {
+    setImageFiles((current) => {
+      const next = [...current]
+      next[index] = file || null
+      return next
+    })
     setStatus(null)
   }
 
@@ -61,19 +59,19 @@ export default function DashboardPage() {
     const isEditing = Boolean(editingProductId)
     setStatus({ type: 'info', text: isEditing ? 'Updating product...' : 'Saving product...' })
 
-    if (!isEditing && imageFiles.length === 0) {
+    if (!isEditing && selectedImageFiles.length === 0) {
       setStatus({ type: 'error', text: 'Please choose at least one product image.' })
       return
     }
 
-    if (imageFiles.length > 3) {
+    if (selectedImageFiles.length > 3) {
       setStatus({ type: 'error', text: 'You can upload a maximum of three product images.' })
       return
     }
 
     let imageUrls = []
-    if (imageFiles.length) {
-      const uploadResult = await uploadProductImages(imageFiles, session.user.id)
+    if (selectedImageFiles.length) {
+      const uploadResult = await uploadProductImages(selectedImageFiles, userId)
       if (uploadResult.error) {
         setStatus({ type: 'error', text: `Image upload failed: ${uploadResult.error}` })
         return
@@ -99,13 +97,13 @@ export default function DashboardPage() {
         .from('products')
         .update({ ...payload, updated_at: new Date().toISOString() })
         .eq('id', editingProductId)
-        .eq('seller_id', session.user.id)
+        .eq('seller_id', userId)
       : await supabase.from('products').insert({
         ...payload,
         image_url: imageUrls[0],
         image_urls: imageUrls,
         is_active: true,
-        seller_id: session.user.id,
+        seller_id: userId,
       })
 
     if (error) {
@@ -149,7 +147,7 @@ export default function DashboardPage() {
       .from('products')
       .update({ is_active: false, updated_at: new Date().toISOString() })
       .eq('id', product.id)
-      .eq('seller_id', session.user.id)
+      .eq('seller_id', userId)
 
     if (error) {
       setStatus({ type: 'error', text: error.message })
@@ -221,12 +219,25 @@ export default function DashboardPage() {
                     <Field label="MOQ" name="min_order_quantity" value={form.min_order_quantity} onChange={updateField} type="number" required />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2.5 ml-1">Product Image</label>
-                    <input className="rjn-input" name="image" onChange={updateImages} type="file" accept="image/*" multiple required={!editingProductId} />
-                    <p className="text-[10px] text-gray-400 font-medium leading-relaxed px-1 mt-2">{editingProductId ? 'Choose one to three images only if you want to replace the current images.' : 'Add at least one image and up to three images. They upload to Supabase Storage before the product is saved.'}</p>
-                    {imageFiles.length ? (
+                    <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2.5 ml-1">Product Images</label>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      {[0, 1, 2].map((index) => (
+                        <label key={index} className="block p-4 bg-gray-50 rounded-2xl border border-dashed border-gray-200 hover:border-brand-300 hover:bg-brand-50/40 transition-colors cursor-pointer">
+                          <span className="flex items-center gap-2 text-xs font-black text-gray-500 uppercase tracking-widest mb-2">
+                            <i className="fa-solid fa-image text-brand-500"></i>
+                            Image {index + 1}{index === 0 && !editingProductId ? ' *' : ''}
+                          </span>
+                          <input className="sr-only" name={`image_${index + 1}`} onChange={(event) => updateImageSlot(index, event.target.files?.[0] || null)} type="file" accept="image/*" required={!editingProductId && index === 0} />
+                          <span className="block text-xs font-semibold text-gray-400 truncate">
+                            {imageFiles[index]?.name || 'Choose image'}
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                    <p className="text-[10px] text-gray-400 font-medium leading-relaxed px-1 mt-2">{editingProductId ? 'Choose one to three images only if you want to replace the current images.' : 'Image 1 is required. Image 2 and Image 3 are optional.'}</p>
+                    {selectedImageFiles.length ? (
                       <div className="mt-3 flex flex-wrap gap-2">
-                        {imageFiles.map((file) => (
+                        {selectedImageFiles.map((file) => (
                           <span key={`${file.name}-${file.size}`} className="px-3 py-1 bg-brand-50 text-brand-700 rounded-full text-xs font-bold border border-brand-100">{file.name}</span>
                         ))}
                       </div>
