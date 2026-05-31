@@ -144,12 +144,12 @@ export default function ProductsPage() {
                 <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Price Range</label>
                 <div className="flex items-center gap-4">
                   <div className="relative flex-grow">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-xs">AUED</span>
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-xs">AED</span>
                     <input type="number" name="min_price" defaultValue={filters.minPrice} placeholder="Min" className="w-full pl-16 pr-4 py-2.5 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-brand-500/20 focus:bg-white transition-all text-sm" />
                   </div>
                   <div className="w-4 h-px bg-gray-300"></div>
                   <div className="relative flex-grow">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-xs">AUED</span>
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-xs">AED</span>
                     <input type="number" name="max_price" defaultValue={filters.maxPrice} placeholder="Max" className="w-full pl-16 pr-4 py-2.5 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-brand-500/20 focus:bg-white transition-all text-sm" />
                   </div>
                 </div>

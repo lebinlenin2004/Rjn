@@ -1,8 +1,10 @@
 import { Link } from 'react-router-dom'
+import { formatPrice, hasPrice } from '../lib/price'
 
 export default function ProductCard({ compact = false, product }) {
-  const price = `AUED ${product.price}`
-  const whatsappText = encodeURIComponent(`*NEW ORDER INQUIRY - RJN STORE*\n\n*Product:* ${product.name}\n*Category:* ${product.category?.name || 'Kitchen'}${product.show_price !== false ? `\n*Price:* ${price}` : ''}\n\nHello! I would like to order this item. Is it available?\n\n_Sent from RJN Store Website_`)
+  const price = formatPrice(product.price)
+  const showPrice = hasPrice(product)
+  const whatsappText = encodeURIComponent(`*NEW ORDER INQUIRY - RJN STORE*\n\n*Product:* ${product.name}\n*Category:* ${product.category?.name || 'Kitchen'}${showPrice ? `\n*Price:* ${price}` : ''}\n\nHello! I would like to order this item. Is it available?\n\n_Sent from RJN Store Website_`)
   const image = product.image_url || product.image || '/placeholder-product.svg'
 
   return (
@@ -44,7 +46,7 @@ export default function ProductCard({ compact = false, product }) {
           </p>
         </div>
 
-        {product.show_price !== false ? (
+        {showPrice ? (
           <div className={compact ? 'mb-4' : 'flex items-center justify-between mb-4'}>
             {compact ? (
               <span className="font-bold text-brand-600 text-base">{price}</span>
@@ -55,7 +57,11 @@ export default function ProductCard({ compact = false, product }) {
               </div>
             )}
           </div>
-        ) : null}
+        ) : (
+          <div className="mb-4">
+            <span className="font-bold text-gray-500 text-sm">Price on request</span>
+          </div>
+        )}
 
         <a href={`https://wa.me/9710509690664?text=${whatsappText}`} target="_blank" rel="noreferrer" className={`relative z-20 flex items-center justify-center gap-2 ${compact ? 'py-2.5 bg-brand-50 hover:bg-brand-900 hover:text-brand-100 text-brand-700' : 'py-3 bg-brand-900 text-brand-100 hover:bg-brand-800'} text-xs font-bold rounded-xl transition-all duration-300 shadow-sm hover:shadow-brand-900/25 active:scale-95`}>
           <i className="fa-brands fa-whatsapp text-sm"></i> WhatsApp

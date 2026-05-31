@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { fetchCategories, fetchSellerProducts } from '../lib/catalog'
+import { formatPrice } from '../lib/price'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../lib/useAuth'
 
@@ -67,7 +68,7 @@ export default function DashboardPage() {
       description: form.description,
       min_order_quantity: Number(form.min_order_quantity),
       name: form.name,
-      price: Number(form.price),
+      price: form.price === '' ? null : Number(form.price),
     }
 
     if (imageUrl) payload.image_url = imageUrl
@@ -194,7 +195,7 @@ export default function DashboardPage() {
                   </div>
                   <Field label="Description" name="description" value={form.description} onChange={updateField} textarea required />
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <Field label="Price (AUED)" name="price" value={form.price} onChange={updateField} type="number" required />
+                    <Field label="Price (AED) optional" name="price" value={form.price} onChange={updateField} type="number" />
                     <Field label="MOQ" name="min_order_quantity" value={form.min_order_quantity} onChange={updateField} type="number" required />
                   </div>
                   <div>
@@ -251,7 +252,7 @@ export default function DashboardPage() {
                     <td className="py-5">
                       <span className="px-3 py-1 text-[10px] font-bold bg-gray-100 text-gray-500 rounded-full uppercase tracking-widest">{product.category?.name || 'Kitchen'}</span>
                     </td>
-                    <td className="py-5"><span className="text-sm font-bold text-brand-600">AUED {product.price}</span></td>
+                    <td className="py-5"><span className="text-sm font-bold text-brand-600">{formatPrice(product.price)}</span></td>
                     <td className="py-5 text-sm font-medium text-gray-400">{product.created_at ? new Date(product.created_at).toLocaleDateString() : '--'}</td>
                     <td className="pr-8 py-5 text-right">
                       <div className="flex items-center justify-end gap-2">

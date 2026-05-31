@@ -22,7 +22,7 @@ create table if not exists public.products (
   category_id uuid references public.categories(id) on delete set null,
   name text not null,
   description text not null,
-  price numeric(12, 2) not null check (price >= 0),
+  price numeric(12, 2) check (price >= 0),
   min_order_quantity integer not null default 1 check (min_order_quantity > 0),
   image_url text,
   stock_status text not null default 'available' check (stock_status in ('available', 'limited', 'unavailable')),
@@ -87,6 +87,8 @@ alter table public.products enable row level security;
 alter table public.feedback enable row level security;
 alter table public.bulk_inquiries enable row level security;
 alter table public.site_settings enable row level security;
+
+alter table public.products alter column price drop not null;
 
 drop policy if exists "Profiles are readable by everyone" on public.profiles;
 create policy "Profiles are readable by everyone" on public.profiles
