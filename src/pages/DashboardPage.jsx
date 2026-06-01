@@ -145,7 +145,7 @@ export default function DashboardPage() {
     setStatus({ type: 'info', text: 'Deleting product...' })
     const { error } = await supabase
       .from('products')
-      .update({ is_active: false, updated_at: new Date().toISOString() })
+      .delete()
       .eq('id', product.id)
       .eq('seller_id', userId)
 

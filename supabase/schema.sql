@@ -114,7 +114,12 @@ create policy "Authenticated users can create products" on public.products
 
 drop policy if exists "Sellers can update own products" on public.products;
 create policy "Sellers can update own products" on public.products
-  for update using (auth.uid() = seller_id);
+  for update using (auth.uid() = seller_id)
+  with check (auth.uid() = seller_id);
+
+drop policy if exists "Sellers can delete own products" on public.products;
+create policy "Sellers can delete own products" on public.products
+  for delete using (auth.uid() = seller_id);
 
 drop policy if exists "Feedback is public" on public.feedback;
 create policy "Feedback is public" on public.feedback
