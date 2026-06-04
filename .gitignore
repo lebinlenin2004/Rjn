@@ -15,7 +15,10 @@ dist-ssr
 rjnBackend/.env
 db.sqlite3
 rjnBackend/db.sqlite3
+rjnBackend/staticfiles/
 rjnBackend/sent_emails/
+__pycache__/
+*.py[cod]
 
 # Editor directories and files
 .vscode/*
