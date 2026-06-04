@@ -85,17 +85,18 @@ export default function ProductsPage() {
 
   return (
     <>
-      <section className="bg-white pt-16 pb-8 border-b border-brand-100">
+      <section className="bg-white pt-16 pb-10 border-b border-brand-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-8 items-end">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Explore RJN Foods</h1>
-              <p className="text-gray-500 text-sm">Discover premium kitchen essentials from trusted RJN suppliers.</p>
+              <p className="text-xs font-black text-brand-600 uppercase tracking-widest mb-3">RJN Catalog</p>
+              <h1 className="text-4xl md:text-5xl font-black text-gray-900 mb-3 tracking-tight">Explore RJN Foods</h1>
+              <p className="text-gray-500 text-base max-w-2xl">Browse fresh essentials, pantry staples, and wholesale-ready products from verified RJN users.</p>
             </div>
 
-            <div className="w-full md:max-w-md">
+            <div className="w-full">
               <form onSubmit={submitSearch} className="relative group">
-                <input type="text" name="q" value={searchDraft} onChange={(event) => setSearchDraft(event.target.value)} placeholder="Search for products..." className="w-full pl-12 pr-24 py-3.5 bg-gray-50 border-none rounded-2xl text-sm focus:ring-2 focus:ring-brand-500/20 transition-all duration-300 group-hover:bg-gray-100" />
+                <input type="text" name="q" value={searchDraft} onChange={(event) => setSearchDraft(event.target.value)} placeholder="Search products, staples, supplies..." className="w-full pl-12 pr-24 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm focus:ring-2 focus:ring-brand-500/20 focus:bg-white transition-all duration-300 group-hover:bg-gray-100" />
                 <i className="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-brand-500 transition-colors"></i>
                 <button type="submit" className="absolute right-2 top-2 bottom-2 px-4 bg-brand-500 text-white text-xs font-bold rounded-xl hover:bg-brand-600 transition-all shadow-lg shadow-brand-500/20">
                   Search
@@ -106,24 +107,26 @@ export default function ProductsPage() {
         </div>
       </section>
 
-      <section className="sticky top-14 z-40 bg-[#fffaf0]/90 backdrop-blur-md border-b border-brand-100 py-4">
+      <section className="sticky top-14 z-40 bg-[#fffaf0]/95 backdrop-blur-md border-b border-brand-100 py-5">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar w-full md:w-auto">
-              <button onClick={() => setCategory('')} className={`px-5 py-2 rounded-xl text-sm font-semibold transition-all whitespace-nowrap ${!filters.category ? 'bg-brand-500 text-white shadow-lg shadow-brand-500/20' : 'bg-gray-50 text-gray-600 hover:bg-gray-100'}`}>
-                All Categories
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+            <div className="flex items-stretch gap-3 overflow-x-auto no-scrollbar w-full">
+              <button onClick={() => setCategory('')} className={`min-w-[150px] px-5 py-3 rounded-2xl text-left transition-all whitespace-nowrap border ${!filters.category ? 'bg-brand-900 text-brand-100 border-brand-900 shadow-lg shadow-brand-900/15' : 'bg-white text-gray-700 border-gray-100 hover:border-brand-300 hover:text-brand-700'}`}>
+                <span className="block text-xs font-black uppercase tracking-widest">All</span>
+                <span className="block text-sm font-black mt-1">Categories</span>
               </button>
               {categories.map((category) => {
                 const value = category.slug || category.id
                 return (
-                  <button key={category.id} onClick={() => setCategory(value)} className={`px-5 py-2 rounded-xl text-sm font-semibold transition-all whitespace-nowrap ${filters.category === value ? 'bg-brand-500 text-white shadow-lg shadow-brand-500/20' : 'bg-gray-50 text-gray-600 hover:bg-gray-100'}`}>
-                    {category.name}
+                  <button key={category.id} onClick={() => setCategory(value)} className={`min-w-[150px] px-5 py-3 rounded-2xl text-left transition-all whitespace-nowrap border ${filters.category === value ? 'bg-brand-900 text-brand-100 border-brand-900 shadow-lg shadow-brand-900/15' : 'bg-white text-gray-700 border-gray-100 hover:border-brand-300 hover:text-brand-700'}`}>
+                    <span className="block text-xs font-black uppercase tracking-widest">Shop</span>
+                    <span className="block text-sm font-black mt-1 truncate">{category.name}</span>
                   </button>
                 )
               })}
             </div>
 
-            <div className="flex items-center gap-3 w-full md:w-auto">
+            <div className="flex items-center gap-3 w-full lg:w-auto lg:flex-shrink-0">
               <button onClick={() => setFilterOpen((value) => !value)} className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-2 border rounded-xl text-sm font-semibold transition-all shadow-sm ${filterOpen ? 'bg-gray-900 text-white border-gray-900' : 'bg-white border-gray-200 text-gray-700 hover:border-brand-500 hover:text-brand-600'}`}>
                 <i className="fa-solid fa-sliders"></i> Filters
               </button>
@@ -165,8 +168,14 @@ export default function ProductsPage() {
 
       <section className="py-12 bg-[#fffaf0] min-h-[60vh]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {loading ? <p className="text-sm font-bold text-gray-400 mb-6">Loading products...</p> : null}
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
+          <div className="flex items-center justify-between gap-4 mb-6">
+            <p className="text-sm font-bold text-gray-500">{loading ? 'Loading products...' : `${products.length} products found`}</p>
+            <Link to="/dashboard" className="hidden sm:inline-flex items-center gap-2 text-xs font-black uppercase tracking-widest text-brand-700 hover:text-brand-900">
+              <i className="fa-solid fa-circle-plus"></i>
+              Add Product
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5 md:gap-6">
             {products.map((product) => <ProductCard compact key={product.id} product={product} />)}
             {!loading && products.length === 0 ? (
               <div className="col-span-full py-20 text-center bg-white rounded-3xl border border-dashed border-gray-200">

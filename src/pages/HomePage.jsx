@@ -85,7 +85,7 @@ export default function HomePage() {
             ))}
             {categories.length === 0 ? (
               <div className="min-w-[260px] p-8 bg-white rounded-3xl border border-dashed border-brand-100 text-gray-500 text-sm font-semibold">
-                Product categories will appear here after they are added in Supabase.
+                Product categories will appear here after they are added in the RJN backend.
               </div>
             ) : null}
           </div>
@@ -106,12 +106,16 @@ export default function HomePage() {
             </Link>
           </div>
 
-          <div id="product-grid" className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
-            {products.map((product) => <ProductCard key={product.id} product={product} />)}
+          <div id="product-grid" className="flex overflow-x-auto no-scrollbar gap-5 md:gap-6 pb-4 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+            {products.map((product) => (
+              <div key={product.id} className="w-[240px] sm:w-[260px] flex-shrink-0">
+                <ProductCard compact product={product} />
+              </div>
+            ))}
             {products.length === 0 ? (
               <div className="col-span-full py-16 text-center bg-gray-50 rounded-3xl border border-dashed border-gray-200">
                 <h3 className="text-lg font-bold text-gray-900 mb-2">No featured products yet</h3>
-                <p className="text-gray-500 max-w-sm mx-auto">Add active products in Supabase to show them on the homepage.</p>
+                <p className="text-gray-500 max-w-sm mx-auto">Add active products from the dashboard to show them on the homepage.</p>
               </div>
             ) : null}
           </div>

@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { apiRequest } from '../lib/api'
 import { fetchCategories, fetchSellerProducts } from '../lib/catalog'
 import { formatPrice } from '../lib/price'
-import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../lib/useAuth'
 
 const emptyProduct = {
@@ -15,7 +15,6 @@ const emptyProduct = {
 
 export default function DashboardPage() {
   const { session } = useAuth()
-  const userId = session?.user?.id
   const [categories, setCategories] = useState([])
   const [editingProductId, setEditingProductId] = useState(null)
   const [imageFiles, setImageFiles] = useState([])
@@ -24,20 +23,19 @@ export default function DashboardPage() {
   const [showForm, setShowForm] = useState(false)
   const [status, setStatus] = useState(null)
   const selectedImageFiles = imageFiles.filter(Boolean)
+  const canManageProducts = Boolean(session)
 
   useEffect(() => {
     fetchCategories().then(setCategories).catch(() => setCategories([]))
   }, [])
 
   const loadProducts = useCallback(() => {
-    return fetchSellerProducts(userId).then(setProducts).catch(() => setProducts([]))
-  }, [userId])
+    return fetchSellerProducts().then(setProducts).catch(() => setProducts([]))
+  }, [])
 
   useEffect(() => {
-    if (!userId) return
-
     loadProducts()
-  }, [loadProducts, userId])
+  }, [loadProducts])
 
   function updateField(event) {
     const { name, value } = event.target
@@ -71,7 +69,7 @@ export default function DashboardPage() {
 
     let imageUrls = []
     if (selectedImageFiles.length) {
-      const uploadResult = await uploadProductImages(selectedImageFiles, userId)
+      const uploadResult = await uploadProductImages(selectedImageFiles)
       if (uploadResult.error) {
         setStatus({ type: 'error', text: `Image upload failed: ${uploadResult.error}` })
         return
@@ -92,21 +90,24 @@ export default function DashboardPage() {
       payload.image_urls = imageUrls
     }
 
-    const { error } = isEditing
-      ? await supabase
-        .from('products')
-        .update({ ...payload, updated_at: new Date().toISOString() })
-        .eq('id', editingProductId)
-        .eq('seller_id', userId)
-      : await supabase.from('products').insert({
-        ...payload,
-        image_url: imageUrls[0],
-        image_urls: imageUrls,
-        is_active: true,
-        seller_id: userId,
-      })
-
-    if (error) {
+    try {
+      if (isEditing) {
+        await apiRequest(`/products/${editingProductId}/`, {
+          method: 'PATCH',
+          body: JSON.stringify(payload),
+        })
+      } else {
+        await apiRequest('/products/', {
+          method: 'POST',
+          body: JSON.stringify({
+            ...payload,
+            image_url: imageUrls[0],
+            image_urls: imageUrls,
+            is_active: true,
+          }),
+        })
+      }
+    } catch (error) {
       setStatus({ type: 'error', text: error.message })
       return
     }
@@ -120,7 +121,7 @@ export default function DashboardPage() {
   function startEditing(product) {
     setEditingProductId(product.id)
     setForm({
-      category_id: product.category_id || '',
+      category_id: product.category_id || product.category?.id || '',
       description: product.description || '',
       min_order_quantity: product.min_order_quantity || 1,
       name: product.name || '',
@@ -143,13 +144,9 @@ export default function DashboardPage() {
     if (!confirmed) return
 
     setStatus({ type: 'info', text: 'Deleting product...' })
-    const { error } = await supabase
-      .from('products')
-      .delete()
-      .eq('id', product.id)
-      .eq('seller_id', userId)
-
-    if (error) {
+    try {
+      await apiRequest(`/products/${product.id}/`, { method: 'DELETE' })
+    } catch (error) {
       setStatus({ type: 'error', text: error.message })
       return
     }
@@ -168,15 +165,19 @@ export default function DashboardPage() {
             <p className="text-gray-500 text-sm">Overview of your shop and inventory management.</p>
           </div>
           <div className="flex items-center gap-3">
-            <button onClick={() => {
+            <button disabled={!canManageProducts} onClick={() => {
               if (showForm && editingProductId) resetForm()
               setShowForm((value) => !value)
-            }} className="flex items-center gap-2 px-6 py-2.5 bg-brand-500 text-white text-sm font-bold rounded-2xl hover:bg-brand-600 shadow-lg shadow-brand-500/20 transition-all active:scale-95">
+            }} className="flex items-center gap-2 px-6 py-2.5 bg-brand-500 text-white text-sm font-bold rounded-2xl hover:bg-brand-600 shadow-lg shadow-brand-500/20 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
               <i className="fa-solid fa-plus"></i>
               <span>{showForm ? 'Close Form' : 'List New Product'}</span>
             </button>
           </div>
         </div>
+
+        {!canManageProducts ? (
+          <StatusMessage status={{ type: 'info', text: 'Login with a verified account to add products.' }} />
+        ) : null}
 
         {status ? (
           <StatusMessage status={status} />
@@ -346,11 +347,11 @@ function StatusMessage({ status }) {
   )
 }
 
-async function uploadProductImages(files, userId) {
+async function uploadProductImages(files) {
   const publicUrls = []
 
   for (const file of files) {
-    const { error, publicUrl } = await uploadProductImage(file, userId)
+    const { error, publicUrl } = await uploadProductImage(file)
     if (error) return { error, publicUrls: [] }
     publicUrls.push(publicUrl)
   }
@@ -358,18 +359,19 @@ async function uploadProductImages(files, userId) {
   return { error: null, publicUrls }
 }
 
-async function uploadProductImage(file, userId) {
-  const extension = file.name.split('.').pop()
-  const fileName = `${userId}/${Date.now()}-${crypto.randomUUID()}.${extension}`
-  const { error } = await supabase.storage.from('product-images').upload(fileName, file, {
-    cacheControl: '3600',
-    upsert: false,
-  })
+async function uploadProductImage(file) {
+  const body = new FormData()
+  body.append('image', file)
 
-  if (error) return { error: error.message, publicUrl: null }
-
-  const { data } = supabase.storage.from('product-images').getPublicUrl(fileName)
-  return { error: null, publicUrl: data.publicUrl }
+  try {
+    const data = await apiRequest('/products/upload_image/', {
+      method: 'POST',
+      body,
+    })
+    return { error: null, publicUrl: data.url }
+  } catch (error) {
+    return { error: error.message, publicUrl: null }
+  }
 }
 
 function Stat({ color, icon, title, value }) {

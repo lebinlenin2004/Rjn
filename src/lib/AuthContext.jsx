@@ -1,47 +1,62 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { authApi, clearTokens, getAccessToken, setTokens } from './api'
 import { AuthContext } from './authStore'
-import { isSupabaseConfigured, supabase } from './supabaseClient'
 
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(null)
   const [profile, setProfile] = useState(null)
-  const [loading, setLoading] = useState(isSupabaseConfigured)
+  const [loading, setLoading] = useState(Boolean(getAccessToken()))
 
   useEffect(() => {
-    if (!isSupabaseConfigured) {
+    if (!getAccessToken()) {
       setLoading(false)
       return undefined
     }
 
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session)
-      setLoading(false)
-    })
+    authApi.me()
+      .then((data) => {
+        setProfile(data)
+        setSession({ user: data })
+      })
+      .catch(() => {
+        clearTokens()
+        setProfile(null)
+        setSession(null)
+      })
+      .finally(() => setLoading(false))
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, nextSession) => {
-      setSession(nextSession)
-    })
-
-    return () => listener.subscription.unsubscribe()
+    return undefined
   }, [])
 
-  useEffect(() => {
-    if (!session?.user) {
-      setProfile(null)
-      return
-    }
+  const login = useCallback(async (email, password) => {
+    const tokens = await authApi.login(email, password)
+    setTokens(tokens)
+    const data = await authApi.me()
+    setProfile(data)
+    setSession({ user: data })
+    return data
+  }, [])
 
-    supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', session.user.id)
-      .single()
-      .then(({ data }) => setProfile(data))
-  }, [session])
+  const register = useCallback(async (payload) => {
+    return authApi.register(payload)
+  }, [])
+
+  const refreshProfile = useCallback(async () => {
+    const data = await authApi.me()
+    setProfile(data)
+    setSession({ user: data })
+    return data
+  }, [])
+
+  const logout = useCallback(() => {
+    clearTokens()
+    setProfile(null)
+    setSession(null)
+  }, [])
 
   const value = useMemo(
-    () => ({ loading, profile, session, supabaseReady: isSupabaseConfigured }),
-    [loading, profile, session],
+    () => ({ apiReady: true, loading, login, logout, profile, refreshProfile, register, session, supabaseReady: true }),
+    [loading, login, logout, profile, refreshProfile, register, session],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

@@ -1,14 +1,17 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import Notice from '../components/Notice'
+import { shopApi } from '../lib/api'
 import { fetchProduct, fetchProducts } from '../lib/catalog'
 import { formatPrice, hasPrice } from '../lib/price'
-import { supabase } from '../lib/supabaseClient'
+import { useCart } from '../lib/useCart'
 import { useAuth } from '../lib/useAuth'
 
 export default function ProductDetailPage() {
   const { id } = useParams()
   const { session, supabaseReady } = useAuth()
+  const cart = useCart()
+  const [cartStatus, setCartStatus] = useState(null)
   const [comment, setComment] = useState('')
   const [feedbackStatus, setFeedbackStatus] = useState(null)
   const [hoverRating, setHoverRating] = useState(0)
@@ -32,16 +35,15 @@ export default function ProductDetailPage() {
 
   async function submitFeedback(event) {
     event.preventDefault()
-    if (!session || !supabase) return
+    if (!session) return
     setFeedbackStatus({ type: 'info', text: 'Posting your review...' })
-    const { error } = await supabase.from('feedback').insert({
+    try {
+      await shopApi.submitFeedback({
       comment: comment.trim(),
-      product_id: id,
+      product: id,
       rating: Number(rating),
-      user_id: session.user.id,
-    })
-
-    if (error) {
+      })
+    } catch (error) {
       setFeedbackStatus({ type: 'error', text: error.message })
       return
     }
@@ -50,6 +52,20 @@ export default function ProductDetailPage() {
     setRating(5)
     setFeedbackStatus({ type: 'success', text: 'Thanks! Your review has been added.' })
     fetchProduct(id).then(setProduct)
+  }
+
+  async function addCurrentProductToCart() {
+    if (!session) {
+      setCartStatus({ type: 'error', text: 'Login to add products to your cart.' })
+      return
+    }
+    setCartStatus({ type: 'info', text: 'Adding to cart...' })
+    try {
+      await cart.addToCart(product.id, product.min_order_quantity || 1)
+      setCartStatus({ type: 'success', text: 'Added to cart.' })
+    } catch (error) {
+      setCartStatus({ type: 'error', text: error.message })
+    }
   }
 
   if (loading) return <section className="py-12 bg-white"><div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-gray-500">Loading product...</div></section>
@@ -113,6 +129,11 @@ export default function ProductDetailPage() {
             </div>
 
             <div>
+              <button onClick={addCurrentProductToCart} type="button" className="flex items-center justify-center gap-2 w-full py-4 mb-3 bg-brand-500 text-white text-sm font-black rounded-xl hover:bg-brand-600 transition-all shadow-lg shadow-brand-500/20 active:scale-[0.98]">
+                <i className="fa-solid fa-cart-plus text-sm"></i>
+                Add to Cart
+              </button>
+              {cartStatus ? <div className={`mb-3 px-4 py-3 rounded-xl text-xs font-bold ${cartStatus.type === 'error' ? 'bg-red-50 text-red-700' : cartStatus.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-blue-50 text-blue-700'}`}>{cartStatus.text}</div> : null}
               <a href={`https://wa.me/9710509690664?text=${whatsappText}`} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 w-full py-4 bg-brand-900 text-brand-100 text-sm font-black rounded-xl hover:bg-brand-800 transition-all shadow-lg shadow-brand-900/20 active:scale-[0.98]">
                 <i className="fa-brands fa-whatsapp text-lg"></i>
                 WhatsApp
@@ -294,14 +315,14 @@ export default function ProductDetailPage() {
             <div className="space-y-4">
               {feedback.length ? feedback.map((item) => (
                 <div key={item.id} className="p-6 bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-                  <div className="flex flex-col sm:flex-row sm:items-start gap-4">
-                    <div className="w-12 h-12 bg-brand-50 text-brand-600 rounded-2xl flex-shrink-0 flex items-center justify-center font-bold text-lg border border-brand-100">
-                      {(item.profiles?.full_name || 'B').slice(0, 1).toUpperCase()}
+                      <div className="flex flex-col sm:flex-row sm:items-start gap-4">
+                        <div className="w-12 h-12 bg-brand-50 text-brand-600 rounded-2xl flex-shrink-0 flex items-center justify-center font-bold text-lg border border-brand-100">
+                      {(item.user_name || 'B').slice(0, 1).toUpperCase()}
                     </div>
                     <div className="flex-grow min-w-0">
                       <div className="flex flex-wrap items-center justify-between gap-3 mb-2">
                         <div>
-                          <h4 className="font-bold text-gray-900">{item.profiles?.full_name || 'Buyer'}</h4>
+                          <h4 className="font-bold text-gray-900">{item.user_name || 'Buyer'}</h4>
                           <p className="text-xs font-semibold text-gray-400">{formatReviewDate(item.created_at)}</p>
                         </div>
                         <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-amber-50 rounded-full border border-amber-100">

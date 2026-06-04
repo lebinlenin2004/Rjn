@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { supabase } from '../lib/supabaseClient'
+import { shopApi } from '../lib/api'
 
 export default function ContactPage({ bulk = false }) {
   return bulk ? <BulkOrderPage /> : <GeneralContactPage />
@@ -10,19 +10,19 @@ function GeneralContactPage() {
 
   async function submit(event) {
     event.preventDefault()
-    const data = Object.fromEntries(new FormData(event.currentTarget))
+    const formElement = event.currentTarget
+    const data = Object.fromEntries(new FormData(formElement))
     setStatus({ type: 'info', text: 'Sending your message...' })
 
-    if (supabase) {
-      const { error } = await supabase.from('bulk_inquiries').insert({ ...data, company: data.subject, message: data.message })
-      if (error) {
-        setStatus({ type: 'error', text: error.message })
-        return
-      }
+    try {
+      await shopApi.submitInquiry({ ...data, company: data.subject, message: data.message })
+    } catch (error) {
+      setStatus({ type: 'error', text: error.message })
+      return
     }
 
     setStatus({ type: 'success', text: 'Message sent successfully. We will contact you soon.' })
-    event.currentTarget.reset()
+    formElement.reset()
   }
 
   return (
@@ -77,25 +77,25 @@ function BulkOrderPage() {
 
   async function submit(event) {
     event.preventDefault()
-    const data = Object.fromEntries(new FormData(event.currentTarget))
+    const formElement = event.currentTarget
+    const data = Object.fromEntries(new FormData(formElement))
     setStatus({ type: 'info', text: 'Sending your bulk order request...' })
 
-    if (supabase) {
-      const { error } = await supabase.from('bulk_inquiries').insert({
+    try {
+      await shopApi.submitInquiry({
         company: data.company_name,
         email: data.email,
         message: `${data.products_interest}\n\n${data.additional_notes || ''}`,
         name: data.name,
         phone: data.phone,
       })
-      if (error) {
-        setStatus({ type: 'error', text: error.message })
-        return
-      }
+    } catch (error) {
+      setStatus({ type: 'error', text: error.message })
+      return
     }
 
     setStatus({ type: 'success', text: 'Your bulk order request was submitted. Our team will contact you soon.' })
-    event.currentTarget.reset()
+    formElement.reset()
   }
 
   return (

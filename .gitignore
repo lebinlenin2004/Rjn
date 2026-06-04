@@ -11,6 +11,11 @@ node_modules
 dist
 dist-ssr
 *.local
+.env
+rjnBackend/.env
+db.sqlite3
+rjnBackend/db.sqlite3
+rjnBackend/sent_emails/
 
 # Editor directories and files
 .vscode/*

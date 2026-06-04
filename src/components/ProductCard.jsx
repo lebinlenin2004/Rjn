@@ -1,14 +1,28 @@
 import { Link } from 'react-router-dom'
 import { formatPrice, hasPrice } from '../lib/price'
+import { useCart } from '../lib/useCart'
+import { useAuth } from '../lib/useAuth'
 
 export default function ProductCard({ compact = false, product }) {
+  const { session } = useAuth()
+  const cart = useCart()
   const price = formatPrice(product.price)
   const showPrice = hasPrice(product)
   const whatsappText = encodeURIComponent(`*NEW ORDER INQUIRY - RJN FOODS*\n\n*Product:* ${product.name}\n*Category:* ${product.category?.name || 'Kitchen'}${showPrice ? `\n*Price:* ${price}` : ''}\n\nHello! I would like to order this item. Is it available?\n\n_Sent from RJN Foods Website_`)
   const image = product.image_url || product.image || '/placeholder-product.svg'
 
+  async function addToCart(event) {
+    event.preventDefault()
+    event.stopPropagation()
+    if (!session) {
+      window.location.href = '/auth'
+      return
+    }
+    await cart.addToCart(product.id, product.min_order_quantity || 1)
+  }
+
   return (
-    <div className={`group relative flex flex-col bg-white ${compact ? 'rounded-2xl p-2 hover:shadow-xl hover:-translate-y-1 duration-300' : 'rounded-3xl p-3 hover:shadow-2xl hover:-translate-y-2 duration-500'} border border-gray-100 shadow-sm transition-all`}>
+    <div className={`group relative flex flex-col bg-white ${compact ? 'rounded-2xl p-3 hover:shadow-xl hover:-translate-y-1 duration-300' : 'rounded-3xl p-3 hover:shadow-2xl hover:-translate-y-2 duration-500'} border border-gray-100 shadow-sm transition-all`}>
       <div className={`${compact ? 'rounded-xl mb-4' : 'rounded-2xl mb-5'} aspect-square overflow-hidden bg-gray-50 relative`}>
         {image ? (
           <img src={image} alt={product.name} className={`${compact ? 'duration-500' : 'duration-700'} w-full h-full object-cover transition-transform group-hover:scale-110`} />
@@ -63,9 +77,14 @@ export default function ProductCard({ compact = false, product }) {
           </div>
         )}
 
-        <a href={`https://wa.me/9710509690664?text=${whatsappText}`} target="_blank" rel="noreferrer" className={`relative z-20 flex items-center justify-center gap-2 ${compact ? 'py-2.5 bg-brand-50 hover:bg-brand-900 hover:text-brand-100 text-brand-700' : 'py-3 bg-brand-900 text-brand-100 hover:bg-brand-800'} text-xs font-bold rounded-xl transition-all duration-300 shadow-sm hover:shadow-brand-900/25 active:scale-95`}>
-          <i className="fa-brands fa-whatsapp text-sm"></i> WhatsApp
-        </a>
+        <div className="relative z-20 grid grid-cols-2 gap-2">
+          <button onClick={addToCart} type="button" className={`flex items-center justify-center gap-2 ${compact ? 'py-2.5 bg-brand-500 text-white hover:bg-brand-600' : 'py-3 bg-brand-500 text-white hover:bg-brand-600'} text-xs font-bold rounded-xl transition-all duration-300 shadow-sm active:scale-95`}>
+            <i className="fa-solid fa-cart-plus text-sm"></i> Cart
+          </button>
+          <a href={`https://wa.me/9710509690664?text=${whatsappText}`} target="_blank" rel="noreferrer" className={`flex items-center justify-center gap-2 ${compact ? 'py-2.5 bg-brand-50 hover:bg-brand-900 hover:text-brand-100 text-brand-700' : 'py-3 bg-brand-900 text-brand-100 hover:bg-brand-800'} text-xs font-bold rounded-xl transition-all duration-300 shadow-sm hover:shadow-brand-900/25 active:scale-95`}>
+            <i className="fa-brands fa-whatsapp text-sm"></i> WhatsApp
+          </a>
+        </div>
       </div>
     </div>
   )

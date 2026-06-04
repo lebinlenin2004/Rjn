@@ -1,12 +1,11 @@
 import { useEffect, useState } from 'react'
 import { Link, Navigate, useSearchParams } from 'react-router-dom'
-import Notice from '../components/Notice'
-import { supabase } from '../lib/supabaseClient'
+import { authApi } from '../lib/api'
 import { useAuth } from '../lib/useAuth'
 
 export default function AuthPage() {
   const [searchParams] = useSearchParams()
-  const { session, supabaseReady } = useAuth()
+  const { login, register, session } = useAuth()
   const [email, setEmail] = useState('')
   const [fullName, setFullName] = useState('')
   const [message, setMessage] = useState('')
@@ -21,42 +20,25 @@ export default function AuthPage() {
     event.preventDefault()
     setMessage('')
 
-    let response
-
-    if (mode === 'login') {
-      response = await supabase.auth.signInWithPassword({ email, password })
-    } else if (mode === 'signup') {
-      response = await supabase.auth.signUp({ email, password, options: { data: { full_name: fullName } } })
-    } else if (mode === 'forgot-password') {
-      response = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth?mode=reset-password`,
-      })
-    } else {
-      response = await supabase.auth.updateUser({ password })
+    try {
+      if (mode === 'login') {
+        await login(email, password)
+      } else if (mode === 'signup') {
+        await register({ email, full_name: fullName, password })
+        setMessage('Account created. Please check your email to verify your account before login.')
+        return
+      } else if (mode === 'forgot-password') {
+        await authApi.requestPasswordReset(email)
+        setMessage('If an active account exists for this email, a reset link has been sent.')
+        return
+      } else {
+        setMessage('Open the password reset link from your email to set a new password.')
+        return
+      }
+      setMessage('Logged in successfully.')
+    } catch (error) {
+      setMessage(error.message)
     }
-
-    if (response.error) setMessage(response.error.message)
-    else {
-      const successMessage = {
-        login: 'Logged in successfully.',
-        signup: 'Check your email to confirm your account.',
-        'forgot-password': 'Password reset link sent. Please check your email.',
-        'reset-password': 'Password updated successfully. You can continue using your account.',
-      }[mode]
-      setMessage(successMessage)
-    }
-  }
-
-  if (!supabaseReady) {
-    return (
-      <div className="min-h-[80vh] flex items-center justify-center py-12 px-4 bg-gray-50/50">
-        <div className="w-full max-w-md">
-          <Notice>
-            Create a Supabase project, run <code>supabase/schema.sql</code>, then add <code>VITE_SUPABASE_URL</code> and <code>VITE_SUPABASE_ANON_KEY</code> to <code>.env</code>.
-          </Notice>
-        </div>
-      </div>
-    )
   }
 
   if (session && mode !== 'reset-password') {
@@ -146,10 +128,12 @@ function getSubmitLabel(mode) {
 }
 
 function AuthField({ label, onChange, required, type = 'text', value }) {
+  const id = `auth-${label.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`
+
   return (
     <div>
-      <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2.5 ml-1">{label}</label>
-      <input className="rjn-input" value={value} onChange={(event) => onChange(event.target.value)} type={type} required={required} minLength={type === 'password' ? 6 : undefined} />
+      <label htmlFor={id} className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2.5 ml-1">{label}</label>
+      <input id={id} className="rjn-input" value={value} onChange={(event) => onChange(event.target.value)} type={type} required={required} minLength={type === 'password' ? 6 : undefined} />
     </div>
   )
 }

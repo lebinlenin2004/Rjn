@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { supabase } from '../lib/supabaseClient'
+import { useCart } from '../lib/useCart'
 import { useAuth } from '../lib/useAuth'
 
 export default function Layout() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
-  const { session, profile, supabaseReady } = useAuth()
+  const { logout, session, profile, supabaseReady } = useAuth()
+  const cart = useCart()
   const location = useLocation()
   const navigate = useNavigate()
 
@@ -27,7 +28,7 @@ export default function Layout() {
     const confirmed = window.confirm('Are you sure you want to sign out?')
     if (!confirmed) return
 
-    await supabase?.auth.signOut()
+    logout()
     navigate('/')
   }
 
@@ -37,8 +38,9 @@ export default function Layout() {
     navigate(`/products${q ? `?q=${encodeURIComponent(q)}` : ''}`)
   }
 
-  const username = profile?.full_name || session?.user?.email?.split('@')[0] || 'Seller'
+  const username = profile?.full_name || session?.user?.email?.split('@')[0] || 'Customer'
   const initial = username.slice(0, 1).toUpperCase()
+  const isAdmin = profile?.role === 'admin'
 
   return (
     <>
@@ -61,6 +63,7 @@ export default function Layout() {
               <div className="flex items-center gap-4">
                 <NavItem to="/">Home</NavItem>
                 <NavItem to="/products">Explore</NavItem>
+                <NavItem to="/cart">Cart</NavItem>
                 <NavItem to="/bulk-order">Bulk Orders</NavItem>
               </div>
 
@@ -83,9 +86,17 @@ export default function Layout() {
                       <Link to="/dashboard" className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-600 rounded-xl hover:bg-brand-50 hover:text-brand-600 transition-all">
                         <i className="fa-solid fa-layer-group text-gray-400"></i> Dashboard
                       </Link>
-                      <Link to="/dashboard" className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-600 rounded-xl hover:bg-brand-50 hover:text-brand-600 transition-all">
-                        <i className="fa-solid fa-circle-plus text-gray-400"></i> Sell Item
+                      <Link to="/profile" className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-600 rounded-xl hover:bg-brand-50 hover:text-brand-600 transition-all">
+                        <i className="fa-solid fa-user text-gray-400"></i> Profile
                       </Link>
+                      <Link to="/orders" className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-600 rounded-xl hover:bg-brand-50 hover:text-brand-600 transition-all">
+                        <i className="fa-solid fa-bag-shopping text-gray-400"></i> Orders
+                      </Link>
+                      {isAdmin ? (
+                        <Link to="/admin" className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-600 rounded-xl hover:bg-brand-50 hover:text-brand-600 transition-all">
+                          <i className="fa-solid fa-chart-line text-gray-400"></i> Admin
+                        </Link>
+                      ) : null}
                     </div>
                     <div className="mt-2 pt-2 border-t border-gray-100 px-2">
                       <button onClick={signOut} className="flex items-center gap-3 w-full px-3 py-2 text-sm font-bold text-red-500 rounded-xl hover:bg-red-50 transition-all">
@@ -97,6 +108,10 @@ export default function Layout() {
               ) : (
                 <div className="flex items-center gap-3">
                   <Link to="/auth" className="text-sm font-semibold text-gray-600 hover:text-brand-600 transition-colors">{supabaseReady ? 'Login' : 'Connect Supabase'}</Link>
+                  <Link to="/cart" className="relative text-sm font-bold text-gray-600 hover:text-brand-600 transition-colors">
+                    <i className="fa-solid fa-cart-shopping"></i>
+                    {cart?.count ? <span className="absolute -top-3 -right-3 w-5 h-5 bg-brand-500 text-white text-[10px] rounded-full flex items-center justify-center">{cart.count}</span> : null}
+                  </Link>
                   <Link to="/auth?mode=signup" className="px-5 py-2 text-sm font-bold text-brand-50 bg-brand-900 rounded-full hover:bg-brand-800 shadow-md shadow-brand-900/20 transition-all active:scale-95">Get Started</Link>
                 </div>
               )}
@@ -116,6 +131,7 @@ export default function Layout() {
             </form>
             <MobileLink to="/">Home</MobileLink>
             <MobileLink to="/products">Explore</MobileLink>
+            <MobileLink to="/cart">Cart {cart?.count ? `(${cart.count})` : ''}</MobileLink>
             <MobileLink to="/bulk-order">Bulk Orders</MobileLink>
             <MobileLink to="/contact">Contact Us</MobileLink>
             {session ? (
@@ -124,6 +140,9 @@ export default function Layout() {
                   <p className="text-xs font-bold text-gray-400 uppercase">My Account</p>
                 </div>
                 <MobileLink to="/dashboard">Dashboard</MobileLink>
+                <MobileLink to="/profile">Profile</MobileLink>
+                <MobileLink to="/orders">Orders</MobileLink>
+                {isAdmin ? <MobileLink to="/admin">Admin</MobileLink> : null}
                 <button onClick={signOut} className="block w-full text-left px-4 py-3 text-sm font-bold text-red-500 rounded-xl hover:bg-red-50">Logout</button>
               </div>
             ) : null}
