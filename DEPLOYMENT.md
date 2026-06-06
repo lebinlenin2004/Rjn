@@ -2,41 +2,71 @@
 
 This project deploys as two services:
 
-- Frontend: Vercel, from the repository root.
-- Backend: Railway, from the `rjnBackend` folder.
+- Frontend: Vercel, from the React/Vite repository root.
+- Backend: Render, from the separate backend repository where `manage.py` is at the repository root.
 
-Do not commit `.env` files. Put all production secrets in the Railway and Vercel dashboards.
+Do not commit `.env` files. Put all production secrets in the Render and Vercel dashboards.
 
-## 1. Push The Project To GitHub
+## 1. Push The Backend To GitHub
 
-Vercel and Railway both work best when connected to a GitHub repository.
+Use the backend repository, currently:
 
-```bash
-git add .
-git commit -m "Prepare RJN for deployment"
-git push
+```text
+https://github.com/lebinlenin2004/rjn_Python.git
 ```
 
-## 2. Deploy Backend On Railway
+Make sure these backend files are at the repository root:
 
-1. Open Railway and create a new project from the GitHub repository.
-2. Set the backend service root directory to `rjnBackend`.
-3. Add a PostgreSQL database service in the same Railway project.
-4. Generate a public domain for the backend service. Your backend domain is `https://rjnpython-production.up.railway.app`.
-5. Add these variables to the backend service:
+```text
+manage.py
+requirements.txt
+Procfile
+render.yaml
+.python-version
+rjn_backend/
+shop/
+templates/
+```
+
+Push the latest backend changes before creating the Render service.
+
+## 2. Create The Backend Web Service On Render
+
+1. Open Render.
+2. Click New +.
+3. Choose Web Service.
+4. Connect the backend GitHub repository: `rjn_Python`.
+5. Use these settings:
+
+```text
+Name: rjn-python
+Runtime: Python
+Branch: main
+Root Directory: leave empty
+Build Command: pip install -r requirements.txt && python manage.py collectstatic --noinput --clear
+Start Command: python manage.py migrate && gunicorn rjn_backend.wsgi:application --bind 0.0.0.0:$PORT
+Health Check Path: /health/
+```
+
+If Render detects `render.yaml`, you can also deploy using the blueprint. The same commands are already defined in that file.
+
+## 3. Add Backend Environment Variables On Render
+
+In the Render backend service, open Environment and add:
 
 ```env
 SECRET_KEY=generate-a-long-random-secret
 DEBUG=False
-ALLOWED_HOSTS=rjnpython-production.up.railway.app
+PYTHON_VERSION=3.13.5
+ALLOWED_HOSTS=localhost,127.0.0.1
 CORS_ALLOWED_ORIGINS=https://your-frontend.vercel.app
-CSRF_TRUSTED_ORIGINS=https://rjnpython-production.up.railway.app,https://your-frontend.vercel.app
+CSRF_TRUSTED_ORIGINS=https://your-render-service.onrender.com,https://your-frontend.vercel.app
 SECURE_SSL_REDIRECT=True
 SESSION_COOKIE_SECURE=True
 CSRF_COOKIE_SECURE=True
 SECURE_HSTS_SECONDS=0
 
-DATABASE_URL=${{Postgres.DATABASE_URL}}
+DATABASE_URL=your-postgres-connection-string
 
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
@@ -54,13 +84,50 @@ EMAIL_USE_TLS=True
 EMAIL_USE_SSL=False
 ```
 
-If Railway does not expose `Postgres.DATABASE_URL`, use the Railway PostgreSQL connection string shown in the PostgreSQL service variables.
+Render automatically provides `RENDER_EXTERNAL_HOSTNAME`, and the Django settings add that hostname to `ALLOWED_HOSTS`. You do not need to manually add the Render domain to `ALLOWED_HOSTS`, but you must include it in `CSRF_TRUSTED_ORIGINS`.
 
-The backend start command is already in `rjnBackend/Procfile`. It runs migrations, collects static files, then starts Gunicorn.
+## 4. Choose A Database
 
-## 3. Create Admin User On Railway
+You have two good options:
 
-After the backend deploy succeeds, run this in the Railway backend service shell:
+Option A: Render PostgreSQL
+
+1. In Render, create a PostgreSQL database.
+2. Copy the Internal Database URL.
+3. Paste it into the backend service as `DATABASE_URL`.
+
+Option B: Supabase PostgreSQL
+
+1. Open Supabase.
+2. Go to Project Settings > Database.
+3. Copy the PostgreSQL connection string.
+4. Paste it into Render as `DATABASE_URL`.
+
+Do not use a localhost database URL in production.
+
+## 5. Deploy The Backend
+
+Click Manual Deploy > Deploy latest commit.
+
+After deploy finishes, test:
+
+```text
+https://your-render-service.onrender.com/health/
+https://your-render-service.onrender.com/api/products/
+https://your-render-service.onrender.com/admin/
+```
+
+Expected results:
+
+```text
+/health/ -> {"status": "ok"}
+/api/products/ -> JSON response
+/admin/ -> Django admin login page
+```
+
+## 6. Create Admin User On Render
+
+After the backend deploy succeeds, open the Render service Shell and run:
 
 ```bash
 python manage.py createsuperuser
@@ -69,15 +136,14 @@ python manage.py createsuperuser
 Then open:
 
 ```text
-https://rjnpython-production.up.railway.app/admin/
+https://your-render-service.onrender.com/admin/
 ```
 
-## 4. Deploy Frontend On Vercel
+## 7. Deploy Frontend On Vercel
 
-1. Import the same GitHub repository in Vercel.
-2. Use the repository root as the frontend root directory.
-3. Vercel should detect Vite automatically.
-4. Confirm these settings:
+1. Import the frontend repository in Vercel.
+2. Use the React/Vite repository root.
+3. Confirm these settings:
 
 ```text
 Build Command: npm run build
@@ -85,27 +151,27 @@ Output Directory: dist
 Install Command: npm install
 ```
 
-5. Add this Vercel environment variable:
+4. Add this Vercel environment variable:
 
 ```env
-VITE_API_BASE_URL=https://rjnpython-production.up.railway.app/api
+VITE_API_BASE_URL=https://your-render-service.onrender.com/api
 ```
 
-6. Deploy the frontend.
+5. Deploy the frontend.
 
-## 5. Final Backend Update
+## 8. Final Backend Update
 
-After Vercel gives you the real frontend URL, update Railway:
+After Vercel gives you the real frontend URL, update Render:
 
 ```env
 CORS_ALLOWED_ORIGINS=https://your-real-vercel-url.vercel.app
-CSRF_TRUSTED_ORIGINS=https://rjnpython-production.up.railway.app,https://your-real-vercel-url.vercel.app
+CSRF_TRUSTED_ORIGINS=https://your-render-service.onrender.com,https://your-real-vercel-url.vercel.app
 FRONTEND_URL=https://your-real-vercel-url.vercel.app
 ```
 
-Redeploy the Railway backend after changing these variables.
+Redeploy the Render backend after changing these variables.
 
-## 6. Quick Production Tests
+## 9. Quick Production Tests
 
 1. Open the Vercel frontend URL.
 2. Register a new user and verify the email.
@@ -115,28 +181,28 @@ Redeploy the Railway backend after changing these variables.
 6. Log in to Django admin and change order status.
 7. Confirm the status update email arrives.
 
-If the frontend says the backend returned HTML instead of JSON, check `VITE_API_BASE_URL`. It must end with `/api` and point to the Railway backend, not Vercel.
+If the frontend says the backend returned HTML instead of JSON, check `VITE_API_BASE_URL`. It must end with `/api` and point to the Render backend, not Vercel.
 
-## Troubleshooting Railway Database Errors
+## Troubleshooting Render
 
-If Railway logs show this:
+If deploy fails during build, check:
 
 ```text
-connection to server at "127.0.0.1", port 5432 failed: Connection refused
+requirements.txt exists at repo root
+Build Command uses pip install -r requirements.txt
+Python runtime is selected
 ```
 
-then the backend is still using a local database URL, such as:
+If deploy starts but the site gives 400 Bad Request, check:
 
-```env
-DATABASE_URL=postgres://postgres:postgres@localhost:5432/rjn
+```text
+RENDER_EXTERNAL_HOSTNAME is present automatically
+CSRF_TRUSTED_ORIGINS includes https://your-render-service.onrender.com
 ```
 
-Do not use `localhost` for Railway. In the Railway backend service, set `DATABASE_URL` to a reference variable from the Railway PostgreSQL service:
+If database connection fails, check:
 
-```env
-DATABASE_URL=${{Postgres.DATABASE_URL}}
+```text
+DATABASE_URL is a real PostgreSQL URL
+DATABASE_URL is not localhost
 ```
-
-If your PostgreSQL service has a different name, choose `Add Reference Variable` in Railway, select the PostgreSQL service, then select `DATABASE_URL`.
-
-After changing `DATABASE_URL`, redeploy the backend.
