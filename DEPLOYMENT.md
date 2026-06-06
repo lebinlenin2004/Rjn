@@ -44,7 +44,7 @@ Runtime: Python
 Branch: main
 Root Directory: leave empty
 Build Command: pip install -r requirements.txt && python manage.py collectstatic --noinput --clear
-Start Command: python manage.py migrate && gunicorn rjn_backend.wsgi:application --bind 0.0.0.0:$PORT
+Start Command: python manage.py migrate && python manage.py ensure_superuser && gunicorn rjn_backend.wsgi:application --bind 0.0.0.0:$PORT
 Health Check Path: /health/
 ```
 
@@ -59,6 +59,9 @@ SECRET_KEY=generate-a-long-random-secret
 DEBUG=False
 PYTHON_VERSION=3.13.5
 ALLOWED_HOSTS=localhost,127.0.0.1
+DJANGO_SUPERUSER_USERNAME=admin
+DJANGO_SUPERUSER_EMAIL=admin@example.com
+DJANGO_SUPERUSER_PASSWORD=choose-a-strong-password
 CORS_ALLOWED_ORIGINS=https://your-frontend.vercel.app
 CSRF_TRUSTED_ORIGINS=https://your-render-service.onrender.com,https://your-frontend.vercel.app
 SECURE_SSL_REDIRECT=True
@@ -127,13 +130,21 @@ Expected results:
 
 ## 6. Create Admin User On Render
 
-After the backend deploy succeeds, open the Render service Shell and run:
+If you do not have Render Shell access, create the admin user during deploy by setting these Render environment variables:
 
-```bash
-python manage.py createsuperuser
+```env
+DJANGO_SUPERUSER_USERNAME=admin
+DJANGO_SUPERUSER_EMAIL=admin@example.com
+DJANGO_SUPERUSER_PASSWORD=choose-a-strong-password
 ```
 
-Then open:
+Then make sure the Render backend Start Command includes:
+
+```text
+python manage.py migrate && python manage.py ensure_superuser && gunicorn rjn_backend.wsgi:application --bind 0.0.0.0:$PORT
+```
+
+Redeploy the service, then open:
 
 ```text
 https://your-render-service.onrender.com/admin/

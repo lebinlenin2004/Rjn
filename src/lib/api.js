@@ -22,14 +22,27 @@ export function clearTokens() {
 export async function apiRequest(path, options = {}) {
   const headers = new Headers(options.headers || {})
   const token = getAccessToken()
+  const controller = new AbortController()
+  const timeout = window.setTimeout(() => controller.abort(), 30000)
 
   if (!(options.body instanceof FormData)) headers.set('Content-Type', 'application/json')
   if (token) headers.set('Authorization', `Bearer ${token}`)
 
-  const response = await fetch(`${API_BASE_URL}${path}`, { ...options, headers })
-  const text = await response.text()
-  let data = null
+  let response
+  let text
+  try {
+    response = await fetch(`${API_BASE_URL}${path}`, { ...options, headers, signal: controller.signal })
+    text = await response.text()
+  } catch (error) {
+    if (error.name === 'AbortError') {
+      throw new Error('The server is taking too long to respond. Please try again in a moment.')
+    }
+    throw new Error('Could not reach the server. Please check your connection and try again.')
+  } finally {
+    window.clearTimeout(timeout)
+  }
 
+  let data = null
   if (text) {
     try {
       data = JSON.parse(text)
